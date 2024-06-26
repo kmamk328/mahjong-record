@@ -248,6 +248,10 @@ const ScoreInputScreen = () => {
     setModalVisible(false);
   };
 
+  const clearAllRolesSelection = () => {
+    setSelectedRoles([]);
+  };
+
   const handleDialogClose = () => {
     setIsDialogOpen(false);
     navigation.navigate('ScoreInput', { gameId }, { animation: 'slide_from_right' });
@@ -292,14 +296,17 @@ const ScoreInputScreen = () => {
     <ScrollView style={styles.container}>
       <View style={styles.innerContainer}>
         <Text style={styles.label}>現在の局: {currentRound.roundNumber.place}{currentRound.roundNumber.round}局 {currentRound.roundNumber.honba}本場</Text>
-        <Picker
-          selectedValue={currentRound.winner}
-          onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winner: itemValue })}
-        >
-          {members.map((member) => (
-            <Picker.Item key={member.id} label={member.name} value={member.id} />
-          ))}
-        </Picker>
+        <Text>あがったひと:</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={currentRound.winner}
+            onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winner: itemValue })}
+          >
+            {members.map((member) => (
+              <Picker.Item key={member.id} label={member.name} value={member.id} />
+            ))}
+          </Picker>
+        </View>
         <View style={styles.switchContainer}>
           <Text>ツモ:</Text>
           <Switch value={currentRound.isTsumo} onValueChange={() => setCurrentRound({ ...currentRound, isTsumo: !currentRound.isTsumo })} />
@@ -308,14 +315,17 @@ const ScoreInputScreen = () => {
           <Text>リーチ:</Text>
           <Switch value={currentRound.isReach} onValueChange={() => setCurrentRound({ ...currentRound, isReach: !currentRound.isReach })} />
         </View>
-        <Picker
-          selectedValue={currentRound.winnerPoints}
-          onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winnerPoints: itemValue })}
-        >
-          {availablePoints.map((point, index) => (
-            <Picker.Item key={index} label={point.toString()} value={point.toString()} />
-          ))}
-        </Picker>
+        <Text>あがり点:</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={currentRound.winnerPoints}
+            onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winnerPoints: itemValue })}
+          >
+            {availablePoints.map((point, index) => (
+              <Picker.Item key={index} label={point.toString()} value={point.toString()} />
+            ))}
+          </Picker>
+        </View>
         <Text>あがった役:</Text>
         <ScrollView horizontal={true} style={styles.rolesContainer}>
           {selectedRoles.map((role, index) => (
@@ -326,14 +336,19 @@ const ScoreInputScreen = () => {
         </ScrollView>
         <Button title="あがった役を選択" onPress={() => setModalVisible(true)} />
         {!currentRound.isTsumo && (
-          <Picker
-            selectedValue={currentRound.discarder}
-            onValueChange={(itemValue) => setCurrentRound({ ...currentRound, discarder: itemValue })}
-          >
-            {members.map((member) => (
-              <Picker.Item key={member.id} label={member.name} value={member.id} />
-            ))}
-          </Picker>
+          <View>
+            <Text style={styles.discarderLabel}>放銃したひと:</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={currentRound.discarder}
+                onValueChange={(itemValue) => setCurrentRound({ ...currentRound, discarder: itemValue })}
+              >
+                {members.map((member) => (
+                  <Picker.Item key={member.id} label={member.name} value={member.id} />
+                ))}
+              </Picker>
+            </View>
+          </View>
         )}
         <View style={styles.buttonContainer}>
           <Button title="前へ" onPress={() => console.log('前へ')} />
@@ -359,7 +374,10 @@ const ScoreInputScreen = () => {
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <Button title="OK" onPress={confirmRolesSelection} />
+          <View style={styles.modalButtonContainer}>
+            <Button title="全解除" onPress={clearAllRolesSelection} />
+            <Button title="OK" onPress={confirmRolesSelection} />
+          </View>
         </View>
       </Modal>
     </ScrollView>
@@ -415,6 +433,22 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     marginBottom: 16,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 16,
+  },
+  discarderLabel: {
+    fontSize: 16,
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  pickerContainer: {
+    borderWidth: 0.5,
+    borderColor: '#000',
+    borderRadius: 4,
   },
 });
 
