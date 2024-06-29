@@ -336,52 +336,60 @@ const ScoreInputScreen = () => {
       <Text style={styles.label}>現在の局: {currentRound.roundNumber.place}{currentRound.roundNumber.round}局 {currentRound.roundNumber.honba}本場</Text>
         <View style={styles.roundContainer}>
           <View style={styles.roundRow}>
-          <Picker
-            selectedValue={currentRound.roundNumber.place}
-            style={styles.roundPicker}
-            onValueChange={(itemValue) => handleRoundNumberChange('place', itemValue)}
-          >
-            {['東', '南', '西', '北'].map((place) => (
-              <Picker.Item key={place} label={place} value={place} />
-            ))}
-          </Picker>
-          <Text> 場 </Text>
+            <View style={styles.roundPickerContainer}>
+              <Picker
+                selectedValue={currentRound.roundNumber.place}
+                style={styles.roundPicker}
+                onValueChange={(itemValue) => handleRoundNumberChange('place', itemValue)}
+                itemStyle={styles.pickerRoundItem}
+              >
+                {['東', '南', '西', '北'].map((place) => (
+                  <Picker.Item key={place} label={place} value={place} />
+                ))}
+              </Picker>
+            </View>
+            <Text style={styles.roundTextInline}> 場 </Text>
           </View>
 
-        <View style={styles.roundRow}>
-          <Picker
-            selectedValue={currentRound.roundNumber.round}
-            style={styles.picker}
-            onValueChange={(itemValue) => handleRoundNumberChange('round', itemValue)}
-          >
-            {[1, 2, 3, 4].map((round) => (
-              <Picker.Item key={round} label={round.toString()} value={round.toString()} />
-            ))}
-          </Picker>
-          <Text> 局 </Text>
+          <View style={styles.roundRow}>
+            <View style={styles.roundPickerContainer}>
+              <Picker
+                selectedValue={currentRound.roundNumber.round}
+                style={styles.roundPicker}
+                onValueChange={(itemValue) => handleRoundNumberChange('round', itemValue)}
+                itemStyle={styles.pickerRoundItem}
+              >
+                {[1, 2, 3, 4].map((round) => (
+                  <Picker.Item key={round} label={round.toString()} value={round.toString()} />
+                ))}
+              </Picker>
+            </View>
+            <Text style={styles.roundTextInline}> 局 </Text>
+          </View>
+
+
+          <View style={styles.roundRow}>
+            <View style={styles.roundPickerContainer}>
+              <Picker
+                selectedValue={currentRound.roundNumber.honba}
+                style={styles.roundPicker}
+                onValueChange={(itemValue) => handleRoundNumberChange('honba', itemValue)}
+                itemStyle={styles.pickerRoundItem}
+              >
+                {Array.from({ length: 20 }, (_, i) => i + 1).map((honba) => (
+                  <Picker.Item key={honba} label={honba.toString()} value={honba.toString()} />
+                ))}
+              </Picker>
+            </View>
+            <Text style={styles.roundTextInline}> 本場 </Text>
+          </View>
         </View>
 
-
-        <View style={styles.roundRow}>
-          <Picker
-            selectedValue={currentRound.roundNumber.honba}
-            style={styles.picker}
-            onValueChange={(itemValue) => handleRoundNumberChange('honba', itemValue)}
-          >
-            {Array.from({ length: 20 }, (_, i) => i + 1).map((honba) => (
-              <Picker.Item key={honba} label={honba.toString()} value={honba.toString()} />
-            ))}
-          </Picker>
-          <Text> 本場 </Text>
-        </View>
-
-
-
-      </View>
         <View style={styles.switchContainer}>
           <Text style={styles.discarderLabel}>流局:</Text>
             <Switch value={currentRound.isRyuukyoku} onValueChange={() => setCurrentRound({ ...currentRound, isRyuukyoku: !currentRound.isRyuukyoku })} />
         </View>
+
         {currentRound.isRyuukyoku ? (
         <View>
           <Text style={styles.discarderLabel}>聴牌者を選択してください</Text>
@@ -463,6 +471,7 @@ const ScoreInputScreen = () => {
                 ))}
               </Picker>
             </View>
+            
 
             {!currentRound.isTsumo && (
               <View>
@@ -586,8 +595,9 @@ const styles = StyleSheet.create({
     width: 150,
   },
   roundPicker: {
-    height: 50,
-    width: 100,
+    // height: 40,
+    // width: 100,
+    width: '120%',
   },
   roundContainer: {
     flexDirection: 'row',
@@ -595,11 +605,30 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 16,
     alignItems: 'center',
+    marginHorizontal: 0,
   },
   roundRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  roundTextInline: {
+    fontSize: 16,
+    marginLeft: 0, // Pickerとテキストの間隔を設ける
+  },
+  roundPickerContainer: {
+    alignItems: 'center',
+    marginHorizontal: 10,
+    borderWidth: 0.5,
+    borderColor: '#000',
+    borderRadius: 4,
+    width: 90, // ここで幅を調整します
+    overflow: 'hidden', // アイテムが見切れないようにするための設定
+  },
+  pickerRoundItem: {
+    fontSize: 10, // ここで文字サイズを調整します
+    height: 50, // Picker の高さに合わせます
+  },
+
 });
 
 export default ScoreInputScreen;
