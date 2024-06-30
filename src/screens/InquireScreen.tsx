@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit } from 'firebase/firestore';
@@ -27,10 +27,14 @@ const InquireScreen = () => {
                         return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
                     })
                 );
+                const roundsQuery = collection(db, 'games', gameDoc.id, 'rounds');
+                const roundsSnapshot = await getDocs(roundsQuery);
+                const roundsList = roundsSnapshot.docs.map(roundDoc => roundDoc.data());
                 gamesList.push({
                     id: gameDoc.id,
                     createdAt: gameData.createdAt.toDate().toLocaleString(),
                     members: membersNames,
+                    rounds: roundsList,
                 });
             }
 
@@ -70,6 +74,10 @@ const InquireScreen = () => {
         }
     };
 
+    const handlePress = (game) => {
+        navigation.navigate('GameDetails', { game });
+    };
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -91,7 +99,7 @@ const InquireScreen = () => {
         >
             <View style={styles.innerContainer}>
                 {games.map((game) => (
-                    <View style={styles.inquirebox} key={game.id}>
+                    <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
                         <Text style={styles.getDateText}>{game.createdAt}</Text>
                         <View style={styles.membersContainer}>
                             {game.members.map((member, index) => (
@@ -101,7 +109,7 @@ const InquireScreen = () => {
                                 </View>
                             ))}
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 ))}
                 {isFetchingMore && (
                     <View style={styles.loadingMoreContainer}>
@@ -142,6 +150,17 @@ const styles = StyleSheet.create({
         elevation: 5,
         padding: 16,
         borderRadius: 8,
+    },
+    gameBox: {
+        marginBottom: 16,
+        padding: 16,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
     },
     getDateText: {
         fontSize: 17,

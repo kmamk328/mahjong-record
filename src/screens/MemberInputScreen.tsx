@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, ScrollView, TextInput, Text, StyleSheet, Button } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -9,6 +9,16 @@ import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firesto
 const MemberInputScreen = () => {
   const [members, setMembers] = useState(['', '', '', '']);
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+        headerStyle: {
+            backgroundColor: '#FFFFFF',
+        },
+        headerTintColor: '#000',
+        headerTitle: 'メンバー入力',
+    });
+  }, [navigation]);
 
   const handleChange = (text, index) => {
     const newMembers = [...members];

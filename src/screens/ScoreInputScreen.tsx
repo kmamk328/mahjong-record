@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect} from 'react';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import {
@@ -14,6 +14,24 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  ScoreInput: { gameId: string };
+  // 他のスクリーンもここに追加
+};
+
+type ScoreInputScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'ScoreInput'
+>;
+
+type ScoreInputScreenRouteProp = RouteProp<RootStackParamList, 'ScoreInput'>;
+
+type Props = {
+  navigation: ScoreInputScreenNavigationProp;
+  route: ScoreInputScreenRouteProp;
+};
 
 
 
@@ -235,6 +253,8 @@ const ScoreInputScreen = () => {
 
       setIsDialogOpen(true);
       console.log('保存')
+      handleDialogClose();
+
     } catch (error) {
       console.error("Error saving round data: ", error);
     }
@@ -268,7 +288,10 @@ const ScoreInputScreen = () => {
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
-    navigation.navigate('ScoreInput', { gameId }, { animation: 'slide_from_right' });
+    navigation.navigate('ScoreInput', {
+      gameId,
+      animation: 'slide_from_right'
+    });
     setCurrentRound({
       discarder: '',
       discarderPoints: '',
@@ -305,6 +328,26 @@ const ScoreInputScreen = () => {
         return `＜${place}場${round}局${honba}本場`;
     }
     return "開局";
+  };
+
+
+  const resetForm = () => {
+    setCurrentRound({
+      discarder: '',
+      discarderPoints: '',
+      isNaki: false,
+      isReach: false,
+      isRyuukyoku: false,
+      roundNumber: { round: '1', place: '東', honba: '0' },
+      winner: '',
+      winnerPoints: '',
+      dora: 0,
+      uraDora: 0,
+      isTsumo: false,
+      isOya: false,
+      roles: [],
+    });
+    setSelectedRoles([]);
   };
 
   const confirmSave = () => {
@@ -417,6 +460,13 @@ const ScoreInputScreen = () => {
                 <Picker.Item key={member.id} label={member.name} value={member.id} />
               ))}
             </Picker>
+          </View>
+          <View style={styles.switchContainer}>
+            <Text style={styles.discarderLabel}>親：</Text>
+            <Switch
+              value={currentRound.isOya}
+              onValueChange={() => setCurrentRound({ ...currentRound, isOya: !currentRound.isOya })}
+            />
           </View>
         </View>
         <View style={styles.switchContainer}>
