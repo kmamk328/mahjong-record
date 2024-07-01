@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, ScrollView, TextInput, Text, StyleSheet, Button } from 'react-native';
+import { View, ScrollView, TextInput, Text, StyleSheet, Button, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MemberInput from '../components/MemberInput';
 
 import { db } from '../../firebaseConfig';
 import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore';
 
 const MemberInputScreen = () => {
   const [members, setMembers] = useState(['', '', '', '']);
+  const [existingMembers, setExistingMembers] = useState([]);
+  const [selectedMemberIndex, setSelectedMemberIndex] = useState(null);
+  const [reset, setReset] = useState(false);
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -20,6 +24,17 @@ const MemberInputScreen = () => {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const membersCollection = collection(db, 'members');
+      const membersSnapshot = await getDocs(membersCollection);
+      const membersList = membersSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
+      setExistingMembers(membersList);
+    };
+
+    fetchMembers();
+  }, []);
+
   const handleChange = (text, index) => {
     const newMembers = [...members];
     newMembers[index] = text;
@@ -27,50 +42,86 @@ const MemberInputScreen = () => {
   };
 
   const handleNext = async () => {
+    for (const member of members) {
+      if (member === '') continue;
+
+      const existingMember = existingMembers.find(existingMember => existingMember.name === member);
+      if (existingMember) {
+        Alert.alert(
+          '確認',
+          `${member}は以前も入力したことがありますか？\n違う人だったら違う名前で登録してください`,
+          [
+            {
+              text: '入力しなおす',
+              onPress: () => {},
+              style: 'cancel',
+            },
+            {
+              text: 'この名前を使用します',
+              onPress: async () => {
+                await proceedWithNext();
+              },
+            },
+          ]
+        );
+        return;
+      }
+    }
+
+    await proceedWithNext();
+  };
+
+  const handleClear = () => {
+    setMembers(['', '', '', '']);
+    setReset(true);
+    setTimeout(() => setReset(false), 0); // Reset the `reset` state to false
+  };
+
+
+  const proceedWithNext = async () => {
     const membersCollection = collection(db, 'members');
     const memberIds = [];
 
     for (const member of members) {
-      // メンバーが既に存在するか確認
-      const q = query(membersCollection, where("name", "==", member));
-      const querySnapshot = await getDocs(q);
+      if (member === '') continue;
 
-      if (querySnapshot.empty) {
-        // メンバーが存在しない場合、新規作成
+      const existingMember = existingMembers.find(existingMember => existingMember.name === member);
+
+      if (existingMember) {
+        memberIds.push(existingMember.id);
+      } else {
         const newMemberRef = doc(membersCollection);
         await setDoc(newMemberRef, { name: member });
         memberIds.push(newMemberRef.id);
-      } else {
-        // メンバーが存在する場合、そのIDを使用
-        querySnapshot.forEach((doc) => {
-          memberIds.push(doc.id);
-        });
       }
     }
 
-    // 新しいゲームドキュメントを作成
     const gameRef = doc(collection(db, 'games'));
     await setDoc(gameRef, { createdAt: new Date(), members: memberIds });
 
-    // スコア入力画面にゲームIDを渡して移動
     navigation.navigate('ScoreInput', { gameId: gameRef.id, members: memberIds });
   };
 
+  
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.memberInputBox}>
-        <Text style={styles.getTitleText}>メンバーを入力してください</Text>
-        <View style={styles.divider} />
-        {members.map((member, index) => (
-          <TextInput
-            key={index}
-            style={styles.input}
-            value={member}
-            onChangeText={(text) => handleChange(text, index)}
-            placeholder={`メンバー ${index + 1}`}
-          />
-        ))}
+    <View style={styles.memberInputBox}>
+      <Text style={styles.getTitleText}>メンバーを入力してください</Text>
+      <View style={styles.divider} />
+      {members.map((member, index) => (
+        <MemberInput
+          key={index}
+          existingMembers={existingMembers.map(member => member.name)}
+          value={member}
+          onChange={(text) => handleChange(text, index)}
+          placeholder={`メンバー ${index + 1}`}
+          reset={reset} // Pass the reset state
+        />
+      ))}
+      <View style={styles.buttonContainer}>
+        <Button title="クリア" onPress={handleClear} />
         <Button title="次へ" onPress={handleNext} />
+      </View>
       </View>
     </ScrollView>
   );
@@ -118,6 +169,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'gray',
     marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
   },
 });
 

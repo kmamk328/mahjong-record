@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
+
 const InquireScreen = () => {
     const navigation = useNavigation();
     const [games, setGames] = useState([]);
