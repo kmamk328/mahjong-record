@@ -1,28 +1,15 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, ScrollView, TextInput, Text, StyleSheet, Button, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Text, StyleSheet, Button, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import MemberInput from '../components/MemberInput';
-
-import { db } from '../../firebaseConfig';
 import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import MemberInput from '../components/MemberInput';
 
 const MemberInputScreen = () => {
   const [members, setMembers] = useState(['', '', '', '']);
   const [existingMembers, setExistingMembers] = useState([]);
-  const [selectedMemberIndex, setSelectedMemberIndex] = useState(null);
   const [reset, setReset] = useState(false);
   const navigation = useNavigation();
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-        headerStyle: {
-            backgroundColor: '#FFFFFF',
-        },
-        headerTintColor: '#000',
-        headerTitle: 'メンバー入力',
-    });
-  }, [navigation]);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -59,7 +46,7 @@ const MemberInputScreen = () => {
             {
               text: 'この名前を使用します',
               onPress: async () => {
-                await proceedWithNext();
+                await proceedWithNext(existingMember.id);
               },
             },
           ]
@@ -70,13 +57,6 @@ const MemberInputScreen = () => {
 
     await proceedWithNext();
   };
-
-  const handleClear = () => {
-    setMembers(['', '', '', '']);
-    setReset(true);
-    setTimeout(() => setReset(false), 0); // Reset the `reset` state to false
-  };
-
 
   const proceedWithNext = async () => {
     const membersCollection = collection(db, 'members');
@@ -99,13 +79,18 @@ const MemberInputScreen = () => {
     const gameRef = doc(collection(db, 'games'));
     await setDoc(gameRef, { createdAt: new Date(), members: memberIds });
 
-    navigation.navigate('ScoreInput', { gameId: gameRef.id, members: memberIds });
+    navigation.navigate('HanchanList', { gameId: gameRef.id, members });
   };
 
-  
+  const handleClear = () => {
+    setMembers(['', '', '', '']);
+    setReset(true);
+    setTimeout(() => setReset(false), 0); // Reset the `reset` state to false
+  };
+
   return (
     <ScrollView style={styles.container}>
-    <View style={styles.memberInputBox}>
+      <View style={styles.memberInputBox}>
       <Text style={styles.getTitleText}>メンバーを入力してください</Text>
       <View style={styles.divider} />
       {members.map((member, index) => (

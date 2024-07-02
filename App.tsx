@@ -9,6 +9,7 @@ import ScoreInputScreen from './src/screens/ScoreInputScreen';
 import ResultScreen from './src/screens/ResultScreen';
 import InquireScreen from './src/screens/InquireScreen';
 import GameDetailsScreen from './src/screens/GameDetailsScreen';
+import HanchanListScreen from './src/screens/HanchanListScreen';
 import TestScreen from './src/screens/TestScreen';
 
 const Stack = createStackNavigator();
@@ -23,6 +24,7 @@ function MainStackNavigator() {
       }}
     >
       <Stack.Screen name="MemberInput" component={MemberInputScreen} />
+      <Stack.Screen name="HanchanList" component={HanchanListScreen} />
       <Stack.Screen name="ScoreInput" component={ScoreInputScreen} />
     </Stack.Navigator>
   );
