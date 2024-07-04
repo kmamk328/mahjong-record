@@ -84,7 +84,8 @@ const HanchanListScreen = ({ route }) => {
             <TouchableOpacity
               key={round.id}
               style={styles.roundContainer}
-              onPress={() => handleRoundPress(round)}
+              // onPress={() => handleRoundPress(round)}
+              onPress={() => handleAddRound()}
             >
               <Text style={styles.roundText}>第 {index + 1} 半荘</Text>
               <Text style={styles.roundText}>トッププレイヤー: {getTopPlayer([round])}</Text>

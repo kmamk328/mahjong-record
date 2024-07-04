@@ -50,6 +50,7 @@ const ScoreInputScreen = () => {
     roles: [],
     dora: 0,
     uraDora: 0,
+    roundSeq: 0
   });
   const [members, setMembers] = useState([]);
   const [rolesOptions, setRolesOptions] = useState([
@@ -85,6 +86,7 @@ const ScoreInputScreen = () => {
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [rounds, setRounds] = useState([]);
+  const [roundSeq, setRoundSeq] = useState(0);
   const navigation = useNavigation();
   const route = useRoute();
   const { gameId } = route.params;
@@ -118,20 +120,32 @@ const ScoreInputScreen = () => {
         memberNames.push({ id: memberId, name: memberDoc.data().name });
       }
       setMembers(memberNames);
+
+
     };
 
+    // const fetchRounds = async () => {
+    //   const roundsRef = collection(db, 'games', gameId, 'rounds');
+    //   const roundsQuery = query(roundsRef, orderBy('roundNumber'));
+    //   const roundsSnapshot = await getDocs(roundsQuery);
+    //   const roundsData = roundsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    //   setRounds(roundsData);
+    //   if (roundsData.length > 0) {
+    //     setCurrentRound(roundsData[0]);
+    //     setCurrentRoundIndex(0);
+    //   }
+    // };
     const fetchRounds = async () => {
-      const roundsRef = collection(db, 'games', gameId, 'rounds');
-      const roundsQuery = query(roundsRef, orderBy('roundNumber'));
-      const roundsSnapshot = await getDocs(roundsQuery);
-      const roundsData = roundsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setRounds(roundsData);
-      if (roundsData.length > 0) {
-        setCurrentRound(roundsData[0]);
-        setCurrentRoundIndex(0);
+      const roundsCollection = collection(db, 'games', gameId, 'rounds');
+      const roundsSnapshot = await getDocs(query(roundsCollection, orderBy('roundSeq', 'desc')));
+      // console.log(roundsSnapshot)
+      if (!roundsSnapshot.empty) {
+        const lastRound = roundsSnapshot.docs[0].data();
+        setRoundSeq(lastRound.roundSeq + 1);
+      } else {
+        setRoundSeq(1);
       }
     };
-
     fetchMembers();
     fetchRounds();
   }, [gameId]);
@@ -228,8 +242,12 @@ const ScoreInputScreen = () => {
         roles: selectedRoles,
         dora: currentRound.dora,
         uraDora: currentRound.uraDora,
-        isOya: currentRound.isOya
+        isOya: currentRound.isOya,
+        roundSeq,
       });
+
+      // Update roundSeq for the next round
+      setRoundSeq(roundSeq + 1);
 
       if (currentRound.winner) {
         const winnerRef = doc(db, 'members', currentRound.winner);
@@ -306,6 +324,7 @@ const ScoreInputScreen = () => {
       roles: [],
       dora: 0,
       uraDora: 0,
+      roundSeq: 0
     });
     setIsTsumo(false);
     setIsNaki(false);
@@ -346,6 +365,7 @@ const ScoreInputScreen = () => {
       isTsumo: false,
       isOya: false,
       roles: [],
+      roundSeq: 0
     });
     setSelectedRoles([]);
   };

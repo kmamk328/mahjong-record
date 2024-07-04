@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity} from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit } from 'firebase/firestore';
@@ -10,6 +10,7 @@ const InquireScreen = () => {
     const navigation = useNavigation();
     const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [lastVisible, setLastVisible] = useState(null);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
 
@@ -51,6 +52,7 @@ const InquireScreen = () => {
         } finally {
             setLoading(false);
             setIsFetchingMore(false);
+            setRefreshing(false); // リフレッシュ完了
         }
     };
 
@@ -79,6 +81,12 @@ const InquireScreen = () => {
         navigation.navigate('GameDetails', { game });
     };
 
+    const onRefresh = () => {
+        setRefreshing(true);
+        setLastVisible(null); // リセットして最初からデータを取得
+        fetchData(false); // リフレッシュ時は追加読み込みではなく最初からデータを取得
+    };
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -90,6 +98,7 @@ const InquireScreen = () => {
 
     return (
         <ScrollView
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             style={styles.container}
             onScroll={({ nativeEvent }) => {
                 if (isCloseToBottom(nativeEvent)) {
