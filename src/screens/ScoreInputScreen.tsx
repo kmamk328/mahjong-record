@@ -98,6 +98,9 @@ const ScoreInputScreen = () => {
   const firestore = getFirestore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [previousRoundInfo, setPreviousRoundInfo] = useState('開局');
+  const [previousRound, setPreviousRound] = useState(null);
+  const [nextRound, setNextRound] = useState(null);
+  
   // const cancelRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -149,6 +152,38 @@ const ScoreInputScreen = () => {
     fetchMembers();
     fetchRounds();
   }, [gameId]);
+
+  useEffect(() => {
+    const fetchRoundDetails = async () => {
+      try {
+        const roundsCollection = collection(db, 'games', gameId, 'rounds');
+        const roundsQuery = query(roundsCollection, orderBy('roundSeq', 'asc'));
+
+        const roundsSnapshot = await getDocs(roundsQuery);
+
+        const rounds = roundsSnapshot.docs.map(doc => doc.data());
+
+        const currentIndex = rounds.findIndex(r => r.roundSeq === currentRound.roundSeq);
+
+        if (currentIndex > 0) {
+          setPreviousRound(rounds[currentIndex - 1]);
+        } else {
+          setPreviousRound(null);
+        }
+
+        if (currentIndex < rounds.length - 1) {
+          setNextRound(rounds[currentIndex + 1]);
+        } else {
+          setNextRound(null);
+        }
+
+      } catch (error) {
+        console.error('Error fetching round details:', error);
+      }
+    };
+
+    fetchRoundDetails();
+  }, [currentRound.roundSeq, gameId]);
 
   useEffect(() => {
     updateAvailablePoints();
@@ -395,8 +430,24 @@ const ScoreInputScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.breadcrumbIndicator}>
+        <View style={styles.indicatorCircle} />
+        <View style={styles.indicatorLine} />
+        <View style={styles.indicatorCurrent} />
+        <View style={styles.indicatorLine} />
+        <View style={styles.indicatorCircle} />
+      </View>
       <View style={styles.innerContainer}>
-      <Text style={styles.label}>現在の局: {currentRound.roundNumber.place}{currentRound.roundNumber.round}局 {currentRound.roundNumber.honba}本場</Text>
+      <View style={styles.breadcrumbContainer}>
+        <Text style={styles.breadcrumbText}>
+          {previousRound ? `${previousRound.roundNumber.place}場${previousRound.roundNumber.round}局${previousRound.roundNumber.honba}本場` : 'データなし'}
+        </Text>
+        <Text style={styles.breadcrumbCurrent}>入力</Text>
+        <Text style={styles.breadcrumbText}>
+          {nextRound ? `${nextRound.roundNumber.place}場${nextRound.roundNumber.round}局${nextRound.roundNumber.honba}本場` : 'データなし'}
+        </Text>
+      </View>
+      {/* <Text style={styles.label}>現在の局: {currentRound.roundNumber.place}{currentRound.roundNumber.round}局 {currentRound.roundNumber.honba}本場</Text> */}
         <View style={styles.roundContainer}>
           <View style={styles.roundRow}>
             <View style={styles.roundPickerContainer}>
@@ -439,7 +490,7 @@ const ScoreInputScreen = () => {
                 onValueChange={(itemValue) => handleRoundNumberChange('honba', itemValue)}
                 itemStyle={styles.pickerRoundItem}
               >
-                {Array.from({ length: 20 }, (_, i) => i + 1).map((honba) => (
+                {Array.from({ length: 21 }, (_, i) => i).map((honba) => (
                   <Picker.Item key={honba} label={honba.toString()} value={honba.toString()} />
                 ))}
               </Picker>
@@ -541,7 +592,7 @@ const ScoreInputScreen = () => {
                 ))}
               </Picker>
             </View>
-            
+
 
             {!currentRound.isTsumo && (
               <View>
@@ -600,6 +651,48 @@ const styles = StyleSheet.create({
   },
   innerContainer: {
     padding: 16,
+  },
+  breadcrumbIndicator: {
+    marginTop: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  indicatorCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ccc',
+  },
+  indicatorCurrent: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#000',
+  },
+  indicatorLine: {
+    width: 50,
+    height: 2,
+    backgroundColor: '#ccc',
+  },
+  breadcrumbContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  breadcrumbText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  breadcrumbCurrent: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
   },
   label: {
     fontSize: 18,
@@ -698,6 +791,7 @@ const styles = StyleSheet.create({
     fontSize: 10, // ここで文字サイズを調整します
     height: 50, // Picker の高さに合わせます
   },
+
 
 });
 

@@ -57,7 +57,7 @@ const GameDetailsScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.gameBox}>
-        <Text style={styles.dateText}>Date: {game.createdAt}</Text>
+        <Text style={styles.dateText}>日時: {game.createdAt}</Text>
         <View style={styles.membersContainer}>
           {game.members.map((member, index) => (
             <Text key={index} style={styles.memberText}>{member}</Text>
@@ -73,7 +73,7 @@ const GameDetailsScreen: React.FC = () => {
             </Text>
             <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
             <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
-            </TouchableOpacity>
+          </TouchableOpacity>
         ))}
       </View>
     </ScrollView>
@@ -124,8 +124,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   memberText: {
-    fontSize: 14,
-    marginRight: 8,
+    fontSize: 20,
+    marginRight: 10,
   },
   roundsContainer: {
     marginTop: 16,
