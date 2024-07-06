@@ -26,8 +26,8 @@ const GameDetailsScreen: React.FC = () => {
           game.rounds.map(async (round) => {
             console.log('Round Data:', round);
 
-            const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : 'N/A';
-            const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'N/A';
+            const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
+            const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
 
             return { ...round, winnerName, discarderName };
           })
@@ -66,8 +66,13 @@ const GameDetailsScreen: React.FC = () => {
         {rounds.map((round, index) => (
           <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
             <Text style={styles.roundText}>Round: {round.roundSeq}</Text>
-            <Text style={styles.roundText}>Winner: {round.winnerName}</Text>
-            <Text style={styles.roundText}>Discarder: {round.discarderName}</Text>
+            <Text style={styles.roundText}>
+              {round.roundNumber.place}場
+              {round.roundNumber.round}局
+              {round.roundNumber.honba}本場
+            </Text>
+            <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
+            <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
             </TouchableOpacity>
         ))}
       </View>
