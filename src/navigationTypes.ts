@@ -1,19 +1,20 @@
 export type RootStackParamList = {
-    Inquire: undefined;
-    GameDetails: { game: Game };
+  Inquire: undefined;
+  GameDetails: { game: Game };
+};
+
+export interface Game {
+  id: string;
+  createdAt: string;
+  members: string[];
+  rounds: Round[];
+}
+
+export interface Round {
+  roundSeq: number;
+  roundNumber: {
+    round: string;
   };
-  
-  export interface Game {
-    id: string;
-    createdAt: string;
-    members: string[];
-    rounds: Round[];
-  }
-  
-  export interface Round {
-    roundNumber: {
-      round: string;
-    };
-    winner: string;
-  }
-  
+  winner: string;
+  discarder: string;
+}

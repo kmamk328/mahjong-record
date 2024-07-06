@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
-
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { RootStackParamList } from '../navigationTypes';
 
 type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
@@ -11,52 +10,67 @@ const GameDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<GameDetailsScreenRouteProp>();
   const { game } = route.params;
+  const [rounds, setRounds] = useState<any[]>([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
-        headerStyle: {
-            backgroundColor: '#FFFFFF',
-        },
-        headerTintColor: '#000',
-        headerTitle: '全局照会',
+      headerTitle: 'ゲーム詳細',
     });
   }, [navigation]);
 
-  if (!game) {
+  useEffect(() => {
+    const fetchRoundDetails = async () => {
+      try {
+        const db = getFirestore();
+        const updatedRounds = await Promise.all(
+          game.rounds.map(async (round) => {
+            console.log('Round Data:', round);
+
+            const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : 'N/A';
+            const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'N/A';
+
+            return { ...round, winnerName, discarderName };
+          })
+        );
+        console.log('Updated Rounds:', updatedRounds);
+        setRounds(updatedRounds);
+      } catch (error) {
+        console.error('Error fetching round details:', error);
+      }
+    };
+
+    fetchRoundDetails();
+  }, [game.rounds]);
+
+  if (!rounds.length) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Game data not available</Text>
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
       </View>
     );
   }
-
-  const sortedRounds = [...game.rounds].sort((a, b) => {
-    return Number(a.roundNumber.round) - Number(b.roundNumber.round);
-  });
 
   const handlePress = (game) => {
     navigation.navigate('GameDetails', { game });
   };
 
   return (
-    <ScrollView style={styles.innerContainer}>
-      <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
-
+    <ScrollView style={styles.container}>
+      <View style={styles.gameBox}>
         <Text style={styles.dateText}>Date: {game.createdAt}</Text>
         <View style={styles.membersContainer}>
           {game.members.map((member, index) => (
-            <View key={index} style={styles.member}>
-              <Text style={styles.memberText}>{member}</Text>
-            </View>
+            <Text key={index} style={styles.memberText}>{member}</Text>
           ))}
         </View>
-        {sortedRounds.map((round, index) => (
-          <View key={index} style={styles.roundBox}>
-            <Text style={styles.roundText}>Round: {round.roundNumber.round}</Text>
-            <Text style={styles.roundText}>Winner: {round.winner}</Text>
-          </View>
+        {rounds.map((round, index) => (
+          <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
+            <Text style={styles.roundText}>Round: {round.roundSeq}</Text>
+            <Text style={styles.roundText}>Winner: {round.winnerName}</Text>
+            <Text style={styles.roundText}>Discarder: {round.discarderName}</Text>
+            </TouchableOpacity>
         ))}
-      </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -66,11 +80,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  innerContainer: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    marginBottom: 16,
     padding: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   gameBox: {
-    marginBottom: 16,
+    flex: 1,
+    marginTop: 8,
+    marginBottom: 8,
     padding: 16,
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -88,31 +117,22 @@ const styles = StyleSheet.create({
   membersContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 8,
-  },
-  member: {
-    marginRight: 8,
   },
   memberText: {
     fontSize: 14,
+    marginRight: 8,
+  },
+  roundsContainer: {
+    marginTop: 16,
   },
   roundBox: {
-    marginTop: 8,
-    padding: 8,
+    marginBottom: 16,
+    padding: 16,
     backgroundColor: '#f0f0f0',
-    borderRadius: 4,
+    borderRadius: 8,
   },
   roundText: {
     fontSize: 14,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 18,
-    color: 'red',
   },
 });
 
