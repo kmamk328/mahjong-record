@@ -10,6 +10,7 @@ const HanchanListScreen = ({ route }) => {
   const [members, setMembers] = useState([]);
   const [rounds, setRounds] = useState([]);
   const [createdAt, setCreatedAt] = useState(null);
+  const [hanchans, setHanchans] = useState<any[]>([]);
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -22,6 +23,32 @@ const HanchanListScreen = ({ route }) => {
     });
   }, [navigation]);
 
+  // useEffect(() => {
+  //   const fetchGameData = async () => {
+  //     const gameRef = doc(db, 'games', gameId);
+  //     const gameDoc = await getDoc(gameRef);
+  //     if (gameDoc.exists) {
+  //       const gameData = gameDoc.data();
+  //       setCreatedAt(gameData.createdAt.toDate().toLocaleString());
+
+  //       const membersList = await Promise.all(
+  //         gameData.members.map(async (memberId) => {
+  //           const memberDoc = await getDoc(doc(db, 'members', memberId));
+  //           return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
+  //         })
+  //       );
+  //       setMembers(membersList);
+  //     }
+
+  //     const roundsCollection = collection(db, 'games', gameId, 'rounds');
+  //     const roundsSnapshot = await getDocs(roundsCollection);
+  //     const roundsList = roundsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  //     setRounds(roundsList);
+  //   };
+
+  //   fetchGameData();
+  // }, [gameId]);
+
   useEffect(() => {
     const fetchGameData = async () => {
       const gameRef = doc(db, 'games', gameId);
@@ -29,20 +56,17 @@ const HanchanListScreen = ({ route }) => {
       if (gameDoc.exists) {
         const gameData = gameDoc.data();
         setCreatedAt(gameData.createdAt.toDate().toLocaleString());
-
-        const membersList = await Promise.all(
-          gameData.members.map(async (memberId) => {
-            const memberDoc = await getDoc(doc(db, 'members', memberId));
-            return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
-          })
-        );
-        setMembers(membersList);
       }
 
-      const roundsCollection = collection(db, 'games', gameId, 'rounds');
-      const roundsSnapshot = await getDocs(roundsCollection);
-      const roundsList = roundsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setRounds(roundsList);
+      const hanchansCollection = collection(db, 'games', gameId, 'hanchans');
+      const hanchansSnapshot = await getDocs(hanchansCollection);
+      const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // ここでhanchansデータをログに出力
+      console.log('Hanchans:', hanchansList);
+
+      
+      setHanchans(hanchansList);
     };
 
     fetchGameData();
@@ -76,30 +100,39 @@ const HanchanListScreen = ({ route }) => {
     navigation.navigate('EditRound', { gameId, round });
   };
 
+  const handleHanchanPress = (hanchan) => {
+    navigation.navigate('ScoreInput', { gameId });
+  };
+
+
   return (
     <ScrollView style={styles.container} scrollEventThrottle={400}>
       <View style={styles.gameBox}>
         <Text style={styles.dateText}>{createdAt}</Text>
         <View style={styles.membersContainer}>
-          {members.map((member, index) => (
-            <Text key={index} style={styles.memberText}>
-              {member}
-            </Text>
-          ))}
+        {members.length > 0 ? (
+            members.map((member, index) => (
+              <Text key={index} style={styles.memberText}>{member}</Text>
+            ))
+          ) : (
+            <Text style={styles.noDataText}>メンバーが見つかりません</Text>
+          )}
         </View>
-        {rounds.length === 0 ? (
+        {hanchans.length === 0 ? (
           <Text style={styles.noDataText}>データがありません</Text>
         ) : (
-          rounds.map((round, index) => (
-            <TouchableOpacity
-              key={round.id}
-              style={styles.roundContainer}
-              onPress={() => handleRoundPress(round)}
-            >
-              <Text style={styles.roundText}>第 {index + 1} 半荘</Text>
-              <Text style={styles.roundText}>トッププレイヤー: {getTopPlayer([round])}</Text>
-            </TouchableOpacity>
-          ))
+          <ScrollView>
+            {hanchans.map((hanchan, index) => (
+              <TouchableOpacity
+                key={hanchan.id}
+                style={styles.hanchanContainer}
+                onPress={() => handleHanchanPress(hanchan)}
+              >
+                <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
+                <Text style={styles.hanchanText}>日時: {hanchan.createdAt.toDate().toLocaleString()}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         )}
         <FAB style={styles.fab} small icon="plus" onPress={handleAddRound} />
       </View>
@@ -149,6 +182,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+  },
+  hanchanContainer: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  hanchanText: {
+    fontSize: 16,
   },
   fab: {
     position: 'absolute',

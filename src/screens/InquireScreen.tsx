@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl} from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -29,14 +28,16 @@ const InquireScreen = () => {
                         return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
                     })
                 );
-                const roundsQuery = collection(db, 'games', gameDoc.id, 'rounds');
-                const roundsSnapshot = await getDocs(roundsQuery);
-                const roundsList = roundsSnapshot.docs.map(roundDoc => roundDoc.data());
+
+                const hanchanQuery = collection(db, 'games', gameDoc.id, 'hanchan');
+                const hanchanSnapshot = await getDocs(hanchanQuery);
+                const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => hanchanDoc.data());
+
                 gamesList.push({
                     id: gameDoc.id,
                     createdAt: gameData.createdAt.toDate().toLocaleString(),
                     members: membersNames,
-                    rounds: roundsList,
+                    hanchan: hanchanList,
                 });
             }
 
@@ -52,7 +53,7 @@ const InquireScreen = () => {
         } finally {
             setLoading(false);
             setIsFetchingMore(false);
-            setRefreshing(false); // リフレッシュ完了
+            setRefreshing(false);
         }
     };
 
@@ -83,8 +84,8 @@ const InquireScreen = () => {
 
     const onRefresh = () => {
         setRefreshing(true);
-        setLastVisible(null); // リセットして最初からデータを取得
-        fetchData(false); // リフレッシュ時は追加読み込みではなく最初からデータを取得
+        setLastVisible(null);
+        fetchData(false);
     };
 
     if (loading) {

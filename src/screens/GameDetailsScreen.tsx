@@ -10,7 +10,7 @@ const GameDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<GameDetailsScreenRouteProp>();
   const { game } = route.params;
-  const [rounds, setRounds] = useState<any[]>([]);
+  const [hanchanDetails, setHanchanDetails] = useState<any[]>([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -19,30 +19,31 @@ const GameDetailsScreen: React.FC = () => {
   }, [navigation]);
 
   useEffect(() => {
-    const fetchRoundDetails = async () => {
+    const fetchHanchanDetails = async () => {
       try {
         const db = getFirestore();
-        const updatedRounds = await Promise.all(
-          game.rounds.map(async (round) => {
-            console.log('Round Data:', round);
-
-            const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
-            const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
-
-            return { ...round, winnerName, discarderName };
+        const updatedHanchanDetails = await Promise.all(
+          (game.hanchan || []).map(async (hanchan) => {
+            const rounds = await Promise.all(
+              (hanchan.rounds || []).map(async (round) => {
+                const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
+                const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
+                return { ...round, winnerName, discarderName };
+              })
+            );
+            return { ...hanchan, rounds };
           })
         );
-        console.log('Updated Rounds:', updatedRounds);
-        setRounds(updatedRounds);
+        setHanchanDetails(updatedHanchanDetails);
       } catch (error) {
-        console.error('Error fetching round details:', error);
+        console.error('Error fetching hanchan details:', error);
       }
     };
 
-    fetchRoundDetails();
-  }, [game.rounds]);
+    fetchHanchanDetails();
+  }, [game.hanchan]);
 
-  if (!rounds.length) {
+  if (!hanchanDetails.length) {
     return (
       <View style={styles.loadingContainer}>
         <Text>Loading...</Text>
@@ -50,13 +51,9 @@ const GameDetailsScreen: React.FC = () => {
     );
   }
 
-  const handlePress = (game) => {
-    navigation.navigate('GameDetails', { game });
+  const handlePress = (hanchan) => {
+    navigation.navigate('HanchanList', { hanchan });
   };
-
-  const sortedRounds = [...rounds].sort((a, b) => {
-    return Number(a.roundSeq) - Number(b.roundSeq);
-  });
 
   return (
     <ScrollView style={styles.container}>
@@ -67,16 +64,20 @@ const GameDetailsScreen: React.FC = () => {
             <Text key={index} style={styles.memberText}>{member}</Text>
           ))}
         </View>
-        {sortedRounds.map((round, index) => (
-          <TouchableOpacity key={`${round.roundSeq}-${index}`} style={styles.gameBox} onPress={() => handlePress(game)}>
-            <Text style={styles.roundText}>Round: {round.roundSeq}</Text>
-            <Text style={styles.roundText}>
-              {round.roundNumber.place}場
-              {round.roundNumber.round}局
-              {round.roundNumber.honba}本場
-            </Text>
-            <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
-            <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
+        {hanchanDetails.map((hanchan, index) => (
+          <TouchableOpacity key={`${hanchan.id}-${index}`} style={styles.hanchanBox} onPress={() => handlePress(hanchan)}>
+            <Text style={styles.hanchanText}>Hanchan: {hanchan.id}</Text>
+            {hanchan.rounds.map((round, idx) => (
+              <View key={`${round.roundSeq}-${idx}`} style={styles.roundBox}>
+                <Text style={styles.roundText}>
+                  {round.roundNumber.place}場
+                  {round.roundNumber.round}局
+                  {round.roundNumber.honba}本場
+                </Text>
+                <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
+                <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
+              </View>
+            ))}
           </TouchableOpacity>
         ))}
       </View>
@@ -93,17 +94,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  header: {
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   gameBox: {
     flex: 1,
@@ -131,14 +121,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginRight: 10,
   },
-  roundsContainer: {
-    marginTop: 16,
-  },
-  roundBox: {
+  hanchanBox: {
     marginBottom: 16,
     padding: 16,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
+  },
+  roundBox: {
+    marginBottom: 8,
+  },
+  hanchanText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
   roundText: {
     fontSize: 14,

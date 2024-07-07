@@ -33,8 +33,6 @@ type Props = {
   route: ScoreInputScreenRouteProp;
 };
 
-
-
 const ScoreInputScreen = () => {
   const [currentRound, setCurrentRound] = useState({
     discarder: '',
@@ -100,8 +98,7 @@ const ScoreInputScreen = () => {
   const [previousRoundInfo, setPreviousRoundInfo] = useState('開局');
   const [previousRound, setPreviousRound] = useState(null);
   const [nextRound, setNextRound] = useState(null);
-  
-  // const cancelRef = useRef(null);
+  const [hanchanId, setHanchanId] = useState(null);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -123,92 +120,32 @@ const ScoreInputScreen = () => {
         memberNames.push({ id: memberId, name: memberDoc.data().name });
       }
       setMembers(memberNames);
-
-
     };
 
-    // const fetchRounds = async () => {
-    //   const roundsRef = collection(db, 'games', gameId, 'rounds');
-    //   const roundsQuery = query(roundsRef, orderBy('roundNumber'));
-    //   const roundsSnapshot = await getDocs(roundsQuery);
-    //   const roundsData = roundsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    //   setRounds(roundsData);
-    //   if (roundsData.length > 0) {
-    //     setCurrentRound(roundsData[0]);
-    //     setCurrentRoundIndex(0);
-    //   }
-    // };
-    const fetchRounds = async () => {
-      const roundsCollection = collection(db, 'games', gameId, 'rounds');
-      const roundsSnapshot = await getDocs(query(roundsCollection, orderBy('roundSeq', 'desc')));
-      // console.log(roundsSnapshot)
-      if (!roundsSnapshot.empty) {
-        const lastRound = roundsSnapshot.docs[0].data();
-        setRoundSeq(lastRound.roundSeq + 1);
+    const fetchHanchan = async () => {
+      const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
+      const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
+      if (!hanchanSnapshot.empty) {
+        const latestHanchan = hanchanSnapshot.docs[0];
+        setHanchanId(latestHanchan.id);
+        const roundsCollection = collection(db, 'games', gameId, 'hanchan', latestHanchan.id, 'rounds');
+        const roundsSnapshot = await getDocs(query(roundsCollection, orderBy('roundSeq', 'desc')));
+        if (!roundsSnapshot.empty) {
+          const lastRound = roundsSnapshot.docs[0].data();
+          setRoundSeq(lastRound.roundSeq + 1);
+        } else {
+          setRoundSeq(1);
+        }
       } else {
+        const newHanchanRef = await addDoc(hanchanCollection, { createdAt: new Date() });
+        setHanchanId(newHanchanRef.id);
         setRoundSeq(1);
       }
     };
+
     fetchMembers();
-    fetchRounds();
+    fetchHanchan();
   }, [gameId]);
-
-  useEffect(() => {
-    const fetchRoundDetails = async () => {
-      try {
-        const roundsCollection = collection(db, 'games', gameId, 'rounds');
-        const roundsQuery = query(roundsCollection, orderBy('roundSeq', 'asc'));
-
-        const roundsSnapshot = await getDocs(roundsQuery);
-
-        const rounds = roundsSnapshot.docs.map(doc => doc.data());
-
-        const currentIndex = rounds.findIndex(r => r.roundSeq === currentRound.roundSeq);
-
-        if (currentIndex > 0) {
-          setPreviousRound(rounds[currentIndex - 1]);
-        } else {
-          setPreviousRound(null);
-        }
-
-        if (currentIndex < rounds.length - 1) {
-          setNextRound(rounds[currentIndex + 1]);
-        } else {
-          setNextRound(null);
-        }
-
-      } catch (error) {
-        console.error('Error fetching round details:', error);
-      }
-    };
-
-    fetchRoundDetails();
-  }, [currentRound.roundSeq, gameId]);
-
-  useEffect(() => {
-    const fetchRoundData = async () => {
-      const db = getFirestore();
-      const gameRef = doc(db, 'games', gameId);
-      const gameDoc = await getDoc(gameRef);
-      if (gameDoc.exists()) {
-        const gameData = gameDoc.data();
-        if (roundSeq > 1) {
-          const previousRoundRef = doc(db, 'games', gameId, 'rounds', `round-${roundSeq - 1}`);
-          const previousRoundDoc = await getDoc(previousRoundRef);
-          if (previousRoundDoc.exists()) {
-            setPreviousRound(previousRoundDoc.data());
-          }
-        }
-        const nextRoundRef = doc(db, 'games', gameId, 'rounds', `round-${roundSeq + 1}`);
-        const nextRoundDoc = await getDoc(nextRoundRef);
-        if (nextRoundDoc.exists()) {
-          setNextRound(nextRoundDoc.data());
-        }
-      }
-    };
-
-    fetchRoundData();
-  }, [gameId, roundSeq]);
 
   useEffect(() => {
     updateAvailablePoints();
@@ -290,7 +227,7 @@ const ScoreInputScreen = () => {
 
   const handleNext = async () => {
     try {
-      const roundsRef = collection(db, 'games', gameId, 'rounds');
+      const roundsRef = collection(db, 'games', gameId, 'hanchan', hanchanId, 'rounds');
       await addDoc(roundsRef, {
         ...currentRound,
         isTsumo: currentRound.isTsumo,
@@ -330,7 +267,6 @@ const ScoreInputScreen = () => {
       }
 
       setIsDialogOpen(true);
-      console.log('保存')
       handleDialogClose();
 
     } catch (error) {
@@ -364,53 +300,12 @@ const ScoreInputScreen = () => {
         {
           text: "保存",
           onPress: async () => {
-            // await saveData();
             navigation.navigate('HanchanList', { gameId });
           }
         }
       ],
       { cancelable: false }
     );
-  };
-
-  const saveData = async () => {
-    try {
-      const roundsRef = collection(db, 'games', gameId, 'rounds');
-      await addDoc(roundsRef, {
-        ...currentRound,
-      });
-
-      Alert.alert("保存しました");
-
-      setCurrentRound({
-        roundNumber: {
-          place: '東',
-          round: '1',
-          honba: '0',
-        },
-        roundSeq: currentRound.roundSeq + 1,
-        winner: '',
-        discarder: '',
-        winnerPoints: '',
-        discarderPoints: '',
-        isOya: false,
-        isTsumo: false,
-        isNaki: false,
-        isReach: false,
-        isRyuukyoku: false,
-        dora: 0,
-        uraDora: 0,
-        roles: []
-      });
-
-      navigation.navigate('ScoreInput', {
-        gameId,
-        members,
-        roundSeq: currentRound.roundSeq + 1
-      });
-    } catch (error) {
-      console.error("Error saving round data: ", error);
-    }
   };
 
   const confirmRolesSelection = () => {
@@ -444,7 +339,6 @@ const ScoreInputScreen = () => {
       roles: [],
       dora: 0,
       uraDora: 0,
-      // roundSeq: 0
       roundSeq: currentRound.roundSeq + 1,
     });
     setIsTsumo(false);
@@ -469,7 +363,6 @@ const ScoreInputScreen = () => {
     }
     return "開局";
   };
-
 
   const resetForm = () => {
     setCurrentRound({
@@ -511,33 +404,9 @@ const ScoreInputScreen = () => {
     );
   };
 
-
-
-
-
-
   return (
     <ScrollView style={styles.container}>
-      {/* <View style={styles.breadcrumbSection}>
-        <View style={styles.breadcrumbIndicator}>
-          <View style={styles.indicatorCircle} />
-          <View style={styles.indicatorLine} />
-          <View style={styles.indicatorCurrent} />
-          <View style={styles.indicatorLine} />
-          <View style={styles.indicatorCircle} />
-        </View>
-        <View style={styles.breadcrumbContainer}>
-          <Text style={styles.breadcrumbText}>
-            {previousRound ? `${previousRound.roundNumber.place}場${previousRound.roundNumber.round}局${previousRound.roundNumber.honba}本場` : 'データなし'}
-          </Text>
-          <Text style={styles.breadcrumbCurrent}>入力</Text>
-          <Text style={styles.breadcrumbText}>
-            {nextRound ? `${nextRound.roundNumber.place}場${nextRound.roundNumber.round}局${nextRound.roundNumber.honba}本場` : 'データなし'}
-          </Text>
-        </View>
-      </View> */}
       <View style={styles.innerContainer}>
-      {/* <Text style={styles.label}>現在の局: {currentRound.roundNumber.place}{currentRound.roundNumber.round}局 {currentRound.roundNumber.honba}本場</Text> */}
         <View style={styles.roundContainer}>
           <View style={styles.roundRow}>
             <View style={styles.roundPickerContainer}>
@@ -570,7 +439,6 @@ const ScoreInputScreen = () => {
             </View>
             <Text style={styles.roundTextInline}> 局 </Text>
           </View>
-
 
           <View style={styles.roundRow}>
             <View style={styles.roundPickerContainer}>
@@ -682,7 +550,6 @@ const ScoreInputScreen = () => {
                 ))}
               </Picker>
             </View>
-
 
             {!currentRound.isTsumo && (
               <View>
@@ -850,8 +717,6 @@ const styles = StyleSheet.create({
     width: 150,
   },
   roundPicker: {
-    // height: 40,
-    // width: 100,
     width: '120%',
   },
   roundContainer: {
@@ -868,7 +733,7 @@ const styles = StyleSheet.create({
   },
   roundTextInline: {
     fontSize: 16,
-    marginLeft: 0, // Pickerとテキストの間隔を設ける
+    marginLeft: 0,
   },
   roundPickerContainer: {
     alignItems: 'center',
@@ -876,15 +741,13 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: '#000',
     borderRadius: 4,
-    width: 90, // ここで幅を調整します
-    overflow: 'hidden', // アイテムが見切れないようにするための設定
+    width: 90,
+    overflow: 'hidden',
   },
   pickerRoundItem: {
-    fontSize: 10, // ここで文字サイズを調整します
-    height: 50, // Picker の高さに合わせます
+    fontSize: 10,
+    height: 50,
   },
-
-
 });
 
 export default ScoreInputScreen;
