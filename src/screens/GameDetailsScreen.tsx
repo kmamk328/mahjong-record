@@ -54,6 +54,10 @@ const GameDetailsScreen: React.FC = () => {
     navigation.navigate('GameDetails', { game });
   };
 
+  const sortedRounds = [...rounds].sort((a, b) => {
+    return Number(a.roundSeq) - Number(b.roundSeq);
+  });
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.gameBox}>
@@ -63,8 +67,8 @@ const GameDetailsScreen: React.FC = () => {
             <Text key={index} style={styles.memberText}>{member}</Text>
           ))}
         </View>
-        {rounds.map((round, index) => (
-          <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
+        {sortedRounds.map((round, index) => (
+          <TouchableOpacity key={`${round.roundSeq}-${index}`} style={styles.gameBox} onPress={() => handlePress(game)}>
             <Text style={styles.roundText}>Round: {round.roundSeq}</Text>
             <Text style={styles.roundText}>
               {round.roundNumber.place}場

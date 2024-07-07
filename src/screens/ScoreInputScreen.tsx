@@ -186,8 +186,33 @@ const ScoreInputScreen = () => {
   }, [currentRound.roundSeq, gameId]);
 
   useEffect(() => {
+    const fetchRoundData = async () => {
+      const db = getFirestore();
+      const gameRef = doc(db, 'games', gameId);
+      const gameDoc = await getDoc(gameRef);
+      if (gameDoc.exists()) {
+        const gameData = gameDoc.data();
+        if (roundSeq > 1) {
+          const previousRoundRef = doc(db, 'games', gameId, 'rounds', `round-${roundSeq - 1}`);
+          const previousRoundDoc = await getDoc(previousRoundRef);
+          if (previousRoundDoc.exists()) {
+            setPreviousRound(previousRoundDoc.data());
+          }
+        }
+        const nextRoundRef = doc(db, 'games', gameId, 'rounds', `round-${roundSeq + 1}`);
+        const nextRoundDoc = await getDoc(nextRoundRef);
+        if (nextRoundDoc.exists()) {
+          setNextRound(nextRoundDoc.data());
+        }
+      }
+    };
+
+    fetchRoundData();
+  }, [gameId, roundSeq]);
+
+  useEffect(() => {
     updateAvailablePoints();
-  }, [isTsumo, currentRound.isOya]);
+  }, [currentRound.isTsumo, currentRound.isOya]);
 
   const handleChange = (key, value) => {
     setCurrentRound({ ...currentRound, [key]: value });
@@ -235,17 +260,17 @@ const ScoreInputScreen = () => {
 
   const updateAvailablePoints = () => {
     let points = [];
-    if (currentRound.isOya && isTsumo) {
+    if (currentRound.isOya && currentRound.isTsumo) {
       points = [
         500, 700, 800, 1000, 1200, 1300, 1500, 1600, 2000, 2300, 2600,
         2900, 3200, 3600, 4000, 6000, 8000, 12000, 16000, 32000
       ].map(p => `${p}オール`);
-    } else if (currentRound.isOya && !isTsumo) {
+    } else if (currentRound.isOya && !currentRound.isTsumo) {
       points = [
         1500, 2000, 2400, 2900, 3400, 3900, 4400, 4800, 5300, 5800, 6800,
         7700, 8700, 9600, 10600, 12000, 18000, 24000, 36000, 48000, 96000
       ];
-    } else if (!currentRound.isOya && isTsumo) {
+    } else if (!currentRound.isOya && currentRound.isTsumo) {
       points = [
         '子(300) 親(500)', '子(400) 親(700)', '子(400) 親(800)', '子(500) 親(1000)',
         '子(600) 親(1200)', '子(700) 親(1300)', '子(800) 親(1500)', '子(800) 親(1600)',
@@ -327,7 +352,65 @@ const ScoreInputScreen = () => {
   };
 
   const handleFinish = () => {
-    navigation.navigate('Result', { gameId });
+    Alert.alert(
+      "確認",
+      "半壮の入力を保存しますか？",
+      [
+        {
+          text: "キャンセル",
+          onPress: () => console.log("キャンセル"),
+          style: "cancel"
+        },
+        {
+          text: "保存",
+          onPress: async () => {
+            // await saveData();
+            navigation.navigate('HanchanList', { gameId });
+          }
+        }
+      ],
+      { cancelable: false }
+    );
+  };
+
+  const saveData = async () => {
+    try {
+      const roundsRef = collection(db, 'games', gameId, 'rounds');
+      await addDoc(roundsRef, {
+        ...currentRound,
+      });
+
+      Alert.alert("保存しました");
+
+      setCurrentRound({
+        roundNumber: {
+          place: '東',
+          round: '1',
+          honba: '0',
+        },
+        roundSeq: currentRound.roundSeq + 1,
+        winner: '',
+        discarder: '',
+        winnerPoints: '',
+        discarderPoints: '',
+        isOya: false,
+        isTsumo: false,
+        isNaki: false,
+        isReach: false,
+        isRyuukyoku: false,
+        dora: 0,
+        uraDora: 0,
+        roles: []
+      });
+
+      navigation.navigate('ScoreInput', {
+        gameId,
+        members,
+        roundSeq: currentRound.roundSeq + 1
+      });
+    } catch (error) {
+      console.error("Error saving round data: ", error);
+    }
   };
 
   const confirmRolesSelection = () => {
@@ -343,6 +426,8 @@ const ScoreInputScreen = () => {
     setIsDialogOpen(false);
     navigation.navigate('ScoreInput', {
       gameId,
+      members,
+      roundSeq: currentRound.roundSeq + 1,
       animation: 'slide_from_right'
     });
     setCurrentRound({
@@ -359,7 +444,8 @@ const ScoreInputScreen = () => {
       roles: [],
       dora: 0,
       uraDora: 0,
-      roundSeq: 0
+      // roundSeq: 0
+      roundSeq: currentRound.roundSeq + 1,
     });
     setIsTsumo(false);
     setIsNaki(false);
@@ -428,25 +514,29 @@ const ScoreInputScreen = () => {
 
 
 
+
+
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.breadcrumbIndicator}>
-        <View style={styles.indicatorCircle} />
-        <View style={styles.indicatorLine} />
-        <View style={styles.indicatorCurrent} />
-        <View style={styles.indicatorLine} />
-        <View style={styles.indicatorCircle} />
-      </View>
+      {/* <View style={styles.breadcrumbSection}>
+        <View style={styles.breadcrumbIndicator}>
+          <View style={styles.indicatorCircle} />
+          <View style={styles.indicatorLine} />
+          <View style={styles.indicatorCurrent} />
+          <View style={styles.indicatorLine} />
+          <View style={styles.indicatorCircle} />
+        </View>
+        <View style={styles.breadcrumbContainer}>
+          <Text style={styles.breadcrumbText}>
+            {previousRound ? `${previousRound.roundNumber.place}場${previousRound.roundNumber.round}局${previousRound.roundNumber.honba}本場` : 'データなし'}
+          </Text>
+          <Text style={styles.breadcrumbCurrent}>入力</Text>
+          <Text style={styles.breadcrumbText}>
+            {nextRound ? `${nextRound.roundNumber.place}場${nextRound.roundNumber.round}局${nextRound.roundNumber.honba}本場` : 'データなし'}
+          </Text>
+        </View>
+      </View> */}
       <View style={styles.innerContainer}>
-      <View style={styles.breadcrumbContainer}>
-        <Text style={styles.breadcrumbText}>
-          {previousRound ? `${previousRound.roundNumber.place}場${previousRound.roundNumber.round}局${previousRound.roundNumber.honba}本場` : 'データなし'}
-        </Text>
-        <Text style={styles.breadcrumbCurrent}>入力</Text>
-        <Text style={styles.breadcrumbText}>
-          {nextRound ? `${nextRound.roundNumber.place}場${nextRound.roundNumber.round}局${nextRound.roundNumber.honba}本場` : 'データなし'}
-        </Text>
-      </View>
       {/* <Text style={styles.label}>現在の局: {currentRound.roundNumber.place}{currentRound.roundNumber.round}局 {currentRound.roundNumber.honba}本場</Text> */}
         <View style={styles.roundContainer}>
           <View style={styles.roundRow}>
@@ -613,7 +703,7 @@ const ScoreInputScreen = () => {
         )}
         <View style={styles.buttonContainer}>
           <Button title="前へ" onPress={() => console.log('前へ')} />
-          <Button title="終了" onPress={() => console.log('終了')} />
+          <Button title="終了" onPress={handleFinish} />
           <Button title="次へ" onPress={confirmSave} />
         </View>
       </View>
@@ -652,12 +742,15 @@ const styles = StyleSheet.create({
   innerContainer: {
     padding: 16,
   },
+  breadcrumbSection: {
+    marginTop: 16,
+    marginBottom: 1,
+  },
   breadcrumbIndicator: {
-    marginTop: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   indicatorCircle: {
     width: 16,
@@ -680,7 +773,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
     padding: 8,
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
