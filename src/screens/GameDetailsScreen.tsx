@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { RootStackParamList } from '../navigationTypes';
@@ -9,8 +9,9 @@ type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
 const GameDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<GameDetailsScreenRouteProp>();
-  const { game } = route.params;
-  const [hanchanDetails, setHanchanDetails] = useState<any[]>([]);
+  const { hanchan } = route.params;
+  const [rounds, setRounds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);  // ローディング状態を追加
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -19,31 +20,42 @@ const GameDetailsScreen: React.FC = () => {
   }, [navigation]);
 
   useEffect(() => {
-    const fetchHanchanDetails = async () => {
+    const fetchRoundDetails = async () => {
       try {
+        console.log('Fetching round details for hanchan:', hanchan);  // デバッグログ
+        const hanchanRounds = hanchan.rounds || [];  // roundsが存在しない場合は空の配列を使用
+
+        if (hanchanRounds.length === 0) {
+          console.log('No rounds available in hanchan:', hanchan);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Rounds in hanchan:', hanchanRounds);  // デバッグログ
         const db = getFirestore();
-        const updatedHanchanDetails = await Promise.all(
-          (game.hanchan || []).map(async (hanchan) => {
-            const rounds = await Promise.all(
-              (hanchan.rounds || []).map(async (round) => {
-                const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
-                const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
-                return { ...round, winnerName, discarderName };
-              })
-            );
-            return { ...hanchan, rounds };
+        const updatedRounds = await Promise.all(
+          hanchanRounds.map(async (round) => {
+            console.log('Fetching details for round:', round);  // デバッグログ
+            const winnerDoc = round.winner ? await getDoc(doc(db, `members/${round.winner}`)) : null;
+            const discarderDoc = round.discarder ? await getDoc(doc(db, `members/${round.discarder}`)) : null;
+            const winnerName = round.winner ? winnerDoc.data()?.name : '流局';
+            const discarderName = round.discarder ? discarderDoc.data()?.name : 'つも';
+            console.log('Round details:', { ...round, winnerName, discarderName });  // デバッグログ
+            return { ...round, winnerName, discarderName };
           })
         );
-        setHanchanDetails(updatedHanchanDetails);
+        setRounds(updatedRounds);
+        setLoading(false);  // ローディング状態を更新
+        console.log('Updated Rounds:', updatedRounds);  // デバッグログ
       } catch (error) {
-        console.error('Error fetching hanchan details:', error);
+        console.error('Error fetching round details:', error);
       }
     };
 
-    fetchHanchanDetails();
-  }, [game.hanchan]);
+    fetchRoundDetails();
+  }, [hanchan]);
 
-  if (!hanchanDetails.length) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <Text>Loading...</Text>
@@ -51,34 +63,25 @@ const GameDetailsScreen: React.FC = () => {
     );
   }
 
-  const handlePress = (hanchan) => {
-    navigation.navigate('HanchanList', { hanchan });
-  };
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.gameBox}>
-        <Text style={styles.dateText}>日時: {game.createdAt}</Text>
+        <Text style={styles.dateText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
         <View style={styles.membersContainer}>
-          {game.members.map((member, index) => (
+          {hanchan.members.map((member, index) => (
             <Text key={index} style={styles.memberText}>{member}</Text>
           ))}
         </View>
-        {hanchanDetails.map((hanchan, index) => (
-          <TouchableOpacity key={`${hanchan.id}-${index}`} style={styles.hanchanBox} onPress={() => handlePress(hanchan)}>
-            <Text style={styles.hanchanText}>Hanchan: {hanchan.id}</Text>
-            {hanchan.rounds.map((round, idx) => (
-              <View key={`${round.roundSeq}-${idx}`} style={styles.roundBox}>
-                <Text style={styles.roundText}>
-                  {round.roundNumber.place}場
-                  {round.roundNumber.round}局
-                  {round.roundNumber.honba}本場
-                </Text>
-                <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
-                <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
-              </View>
-            ))}
-          </TouchableOpacity>
+        {rounds.map((round, index) => (
+          <View key={`${round.roundSeq}-${index}`} style={styles.roundBox}>
+            <Text style={styles.roundText}>
+              {round.roundNumber.place}場
+              {round.roundNumber.round}局
+              {round.roundNumber.honba}本場
+            </Text>
+            <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
+            <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
+          </View>
         ))}
       </View>
     </ScrollView>
@@ -121,18 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginRight: 10,
   },
-  hanchanBox: {
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
   roundBox: {
-    marginBottom: 8,
-  },
-  hanchanText: {
-    fontSize: 18,
-    fontWeight: 'bold',
     marginBottom: 8,
   },
   roundText: {

@@ -34,6 +34,7 @@ function InquireStackNavigator() {
   return (
     <Stack.Navigator initialRouteName="Inquire">
       <Stack.Screen name="Inquire" component={InquireScreen} />
+      <Stack.Screen name="HanchanList" component={HanchanListScreen} />
       <Stack.Screen name="GameDetails" component={GameDetailsScreen} />
     </Stack.Navigator>
   );

@@ -79,7 +79,8 @@ const InquireScreen = () => {
     };
 
     const handlePress = (game) => {
-        navigation.navigate('GameDetails', { game });
+        navigation.navigate('HanchanList', { gameId: game.id });
+        // navigation.navigate('GameDetails', { game });
     };
 
     const onRefresh = () => {

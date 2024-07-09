@@ -1,9 +1,7 @@
 export type RootStackParamList = {
   Inquire: undefined;
-  GameDetails: { game: Game };
-  ScoreInput: { gameId: string };
   HanchanList: { gameId: string };
-  EditRound: { gameId: string, round: Round };
+  GameDetails: { hanchan: Hanchan };
 };
 
 export interface Game {
@@ -15,7 +13,8 @@ export interface Game {
 
 export interface Hanchan {
   id: string;
-  createdAt: string;
+  createdAt: FirebaseFirestore.Timestamp;
+  gameId: string;
   rounds: Round[];
 }
 
@@ -28,13 +27,6 @@ export interface Round {
   };
   winner: string;
   discarder: string;
-  isTsumo: boolean;
-  isNaki: boolean;
-  isReach: boolean;
-  isRyuukyoku: boolean;
-  winnerPoints: string;
-  discarderPoints: string;
-  roles: string[];
-  dora: number;
-  uraDora: number;
+  winnerName?: string;
+  discarderName?: string;
 }

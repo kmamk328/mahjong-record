@@ -56,10 +56,21 @@ const HanchanListScreen = ({ route }) => {
       if (gameDoc.exists) {
         const gameData = gameDoc.data();
         setCreatedAt(gameData.createdAt.toDate().toLocaleString());
-      }
+      
 
-      const hanchansCollection = collection(db, 'games', gameId, 'hanchans');
+      const membersList = await Promise.all(
+        gameData.members.map(async (memberId) => {
+        const memberDoc = await getDoc(doc(db, 'members', memberId));
+        return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
+      })
+      );
+      setMembers(membersList);
+    }
+
+
+      const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
       const hanchansSnapshot = await getDocs(hanchansCollection);
+      console.log('hanchansSnapshot:', hanchansSnapshot); // 追加のデバッグ用ログ
       const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // ここでhanchansデータをログに出力
@@ -101,7 +112,8 @@ const HanchanListScreen = ({ route }) => {
   };
 
   const handleHanchanPress = (hanchan) => {
-    navigation.navigate('ScoreInput', { gameId });
+    // navigation.navigate('ScoreInput', { gameId });
+    navigation.navigate('GameDetails', { hanchan });
   };
 
 
