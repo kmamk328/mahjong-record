@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
 
 const HanchanListScreen = ({ route }) => {
   const { gameId } = route.params;
   const [members, setMembers] = useState([]);
-  const [rounds, setRounds] = useState([]);
   const [createdAt, setCreatedAt] = useState(null);
   const [hanchans, setHanchans] = useState<any[]>([]);
   const navigation = useNavigation();
@@ -23,32 +22,6 @@ const HanchanListScreen = ({ route }) => {
     });
   }, [navigation]);
 
-  // useEffect(() => {
-  //   const fetchGameData = async () => {
-  //     const gameRef = doc(db, 'games', gameId);
-  //     const gameDoc = await getDoc(gameRef);
-  //     if (gameDoc.exists) {
-  //       const gameData = gameDoc.data();
-  //       setCreatedAt(gameData.createdAt.toDate().toLocaleString());
-
-  //       const membersList = await Promise.all(
-  //         gameData.members.map(async (memberId) => {
-  //           const memberDoc = await getDoc(doc(db, 'members', memberId));
-  //           return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
-  //         })
-  //       );
-  //       setMembers(membersList);
-  //     }
-
-  //     const roundsCollection = collection(db, 'games', gameId, 'rounds');
-  //     const roundsSnapshot = await getDocs(roundsCollection);
-  //     const roundsList = roundsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  //     setRounds(roundsList);
-  //   };
-
-  //   fetchGameData();
-  // }, [gameId]);
-
   useEffect(() => {
     const fetchGameData = async () => {
       const gameRef = doc(db, 'games', gameId);
@@ -56,73 +29,43 @@ const HanchanListScreen = ({ route }) => {
       if (gameDoc.exists) {
         const gameData = gameDoc.data();
         setCreatedAt(gameData.createdAt.toDate().toLocaleString());
-      
 
-      const membersList = await Promise.all(
-        gameData.members.map(async (memberId) => {
-        const memberDoc = await getDoc(doc(db, 'members', memberId));
-        return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
-      })
-      );
-      setMembers(membersList);
-    }
-
+        const membersList = await Promise.all(
+          gameData.members.map(async (memberId) => {
+            const memberDoc = await getDoc(doc(db, 'members', memberId));
+            return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
+          })
+        );
+        setMembers(membersList);
+      }
 
       const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
       const hanchansSnapshot = await getDocs(hanchansCollection);
-      console.log('hanchansSnapshot:', hanchansSnapshot); // 追加のデバッグ用ログ
       const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      // ここでhanchansデータをログに出力
-      console.log('Hanchans:', hanchansList);
-
-      
       setHanchans(hanchansList);
     };
 
     fetchGameData();
-  }, [gameId]);
+  }, [gameId, route]);
 
-  const getTopPlayer = (rounds) => {
-    const playerCounts = {};
-
-    rounds.forEach((round) => {
-      const winner = round.winner;
-      if (winner) {
-        if (!playerCounts[winner]) {
-          playerCounts[winner] = 0;
-        }
-        playerCounts[winner]++;
-      }
-    });
-
-    const topPlayer = Object.keys(playerCounts).reduce(
-      (a, b) => (playerCounts[a] > playerCounts[b] ? a : b),
-      ''
-    );
-    return topPlayer;
-  };
-
-  const handleAddRound = () => {
-    navigation.navigate('ScoreInput', { gameId });
-  };
-
-  const handleRoundPress = (round) => {
-    navigation.navigate('EditRound', { gameId, round });
+  const handleAddRound = async () => {
+    try {
+      navigation.navigate('ScoreInput', { gameId });
+    } catch (error) {
+      console.error('Error navigating to ScoreInput:', error);
+    }
   };
 
   const handleHanchanPress = (hanchan) => {
-    // navigation.navigate('ScoreInput', { gameId });
     navigation.navigate('GameDetails', { hanchan });
   };
-
 
   return (
     <ScrollView style={styles.container} scrollEventThrottle={400}>
       <View style={styles.gameBox}>
         <Text style={styles.dateText}>{createdAt}</Text>
         <View style={styles.membersContainer}>
-        {members.length > 0 ? (
+          {members.length > 0 ? (
             members.map((member, index) => (
               <Text key={index} style={styles.memberText}>{member}</Text>
             ))
@@ -141,7 +84,7 @@ const HanchanListScreen = ({ route }) => {
                 onPress={() => handleHanchanPress(hanchan)}
               >
                 <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
-                <Text style={styles.hanchanText}>日時: {hanchan.createdAt.toDate().toLocaleString()}</Text>
+                <Text style={styles.hanchanText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>

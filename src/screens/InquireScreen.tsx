@@ -2,8 +2,9 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
+import { FAB } from 'react-native-paper'; // Floating Action Button
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -80,13 +81,24 @@ const InquireScreen = () => {
 
     const handlePress = (game) => {
         navigation.navigate('HanchanList', { gameId: game.id });
-        // navigation.navigate('GameDetails', { game });
     };
 
     const onRefresh = () => {
         setRefreshing(true);
         setLastVisible(null);
         fetchData(false);
+    };
+
+    const handleAddGame = async () => {
+        try {
+            const newGameRef = await addDoc(collection(db, 'games'), {
+                createdAt: Timestamp.now(),
+                members: [], // 初期状態ではメンバーなし
+            });
+            navigation.navigate('MemberInput', { gameId: newGameRef.id });
+        } catch (error) {
+            console.error('Error adding new game:', error);
+        }
     };
 
     if (loading) {
@@ -99,38 +111,41 @@ const InquireScreen = () => {
     }
 
     return (
-        <ScrollView
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            style={styles.container}
-            onScroll={({ nativeEvent }) => {
-                if (isCloseToBottom(nativeEvent)) {
-                    handleLoadMore();
-                }
-            }}
-            scrollEventThrottle={400}
-        >
-            <View style={styles.innerContainer}>
-                {games.map((game) => (
-                    <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
-                        <Text style={styles.getDateText}>{game.createdAt}</Text>
-                        <View style={styles.membersContainer}>
-                            {game.members.map((member, index) => (
-                                <View key={index} style={styles.member}>
-                                    <Icon name="user" size={20} color="black" />
-                                    <Text style={styles.getStartedText}>{member}</Text>
-                                </View>
-                            ))}
+        <View style={styles.container}>
+            <ScrollView
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                style={styles.scrollView}
+                onScroll={({ nativeEvent }) => {
+                    if (isCloseToBottom(nativeEvent)) {
+                        handleLoadMore();
+                    }
+                }}
+                scrollEventThrottle={400}
+            >
+                <View style={styles.innerContainer}>
+                    {games.map((game) => (
+                        <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
+                            <Text style={styles.getDateText}>{game.createdAt}</Text>
+                            <View style={styles.membersContainer}>
+                                {game.members.map((member, index) => (
+                                    <View key={index} style={styles.member}>
+                                        <Icon name="user" size={20} color="black" />
+                                        <Text style={styles.getStartedText}>{member}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                    {isFetchingMore && (
+                        <View style={styles.loadingMoreContainer}>
+                            <ActivityIndicator size="large" />
+                            <Text>Loading more...</Text>
                         </View>
-                    </TouchableOpacity>
-                ))}
-                {isFetchingMore && (
-                    <View style={styles.loadingMoreContainer}>
-                        <ActivityIndicator size="large" />
-                        <Text>Loading more...</Text>
-                    </View>
-                )}
-            </View>
-        </ScrollView>
+                    )}
+                </View>
+            </ScrollView>
+            <FAB style={styles.fab} small icon="plus" onPress={handleAddGame} />
+        </View>
     );
 };
 
@@ -141,6 +156,9 @@ const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
+    },
+    scrollView: {
         flex: 1,
     },
     innerContainer: {
@@ -197,6 +215,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 16,
+    },
+    fab: {
+        position: 'absolute',
+        margin: 16,
+        right: 0,
+        bottom: 0,
     },
 });
 

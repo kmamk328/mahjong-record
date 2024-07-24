@@ -34,8 +34,10 @@ function InquireStackNavigator() {
   return (
     <Stack.Navigator initialRouteName="Inquire">
       <Stack.Screen name="Inquire" component={InquireScreen} />
+      <Stack.Screen name="MemberInput" component={MemberInputScreen} />
       <Stack.Screen name="HanchanList" component={HanchanListScreen} />
       <Stack.Screen name="GameDetails" component={GameDetailsScreen} />
+      <Stack.Screen name="ScoreInput" component={ScoreInputScreen} />
     </Stack.Navigator>
   );
 }
@@ -51,13 +53,13 @@ export default function App() {
         />
         <Tab.Screen
           name="記録"
-          component={MainStackNavigator}
+          // component={MainStackNavigator}
+          component={TestScreen}
           options={{ headerShown: false }}
         />
         <Tab.Screen
           name="結果"
           component={TestScreen}
-          // component={ResultScreen}
           options={{ headerShown: false }}
         />
       </Tab.Navigator>

@@ -287,7 +287,7 @@ const ScoreInputScreen = () => {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     Alert.alert(
       "確認",
       "半壮の入力を保存しますか？",
@@ -300,7 +300,8 @@ const ScoreInputScreen = () => {
         {
           text: "保存",
           onPress: async () => {
-            navigation.navigate('HanchanList', { gameId });
+            await handleNext();  // 最新のデータを保存
+            navigation.navigate('HanchanList', { gameId });  // 全半壮照会画面に遷移
           }
         }
       ],

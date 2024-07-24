@@ -16,6 +16,7 @@ export interface Hanchan {
   createdAt: FirebaseFirestore.Timestamp;
   gameId: string;
   rounds: Round[];
+  members?: string[];
 }
 
 export interface Round {

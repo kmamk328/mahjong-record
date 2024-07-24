@@ -5,7 +5,8 @@ import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firesto
 import { db } from '../../firebaseConfig';
 import MemberInput from '../components/MemberInput';
 
-const MemberInputScreen = () => {
+const MemberInputScreen = ({ route }) => {
+  const { gameId } = route.params;
   const [members, setMembers] = useState(['', '', '', '']);
   const [existingMembers, setExistingMembers] = useState([]);
   const [reset, setReset] = useState(false);
@@ -76,10 +77,10 @@ const MemberInputScreen = () => {
       }
     }
 
-    const gameRef = doc(collection(db, 'games'));
-    await setDoc(gameRef, { createdAt: new Date(), members: memberIds });
+    const gameRef = doc(db, 'games', gameId);
+    await setDoc(gameRef, { createdAt: new Date(), members: memberIds }, { merge: true });
 
-    navigation.navigate('HanchanList', { gameId: gameRef.id, members });
+    navigation.navigate('HanchanList', { gameId });
   };
 
   const handleClear = () => {
@@ -91,22 +92,22 @@ const MemberInputScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.memberInputBox}>
-      <Text style={styles.getTitleText}>メンバーを入力してください</Text>
-      <View style={styles.divider} />
-      {members.map((member, index) => (
-        <MemberInput
-          key={index}
-          existingMembers={existingMembers.map(member => member.name)}
-          value={member}
-          onChange={(text) => handleChange(text, index)}
-          placeholder={`メンバー ${index + 1}`}
-          reset={reset} // Pass the reset state
-        />
-      ))}
-      <View style={styles.buttonContainer}>
-        <Button title="クリア" onPress={handleClear} />
-        <Button title="次へ" onPress={handleNext} />
-      </View>
+        <Text style={styles.getTitleText}>メンバーを入力してください</Text>
+        <View style={styles.divider} />
+        {members.map((member, index) => (
+          <MemberInput
+            key={index}
+            existingMembers={existingMembers.map(member => member.name)}
+            value={member}
+            onChange={(text) => handleChange(text, index)}
+            placeholder={`メンバー ${index + 1}`}
+            reset={reset} // Pass the reset state
+          />
+        ))}
+        <View style={styles.buttonContainer}>
+          <Button title="クリア" onPress={handleClear} />
+          <Button title="次へ" onPress={handleNext} />
+        </View>
       </View>
     </ScrollView>
   );
