@@ -8,8 +8,8 @@ import { FAB } from 'react-native-paper'; // Floating Action Button
 const HanchanListScreen = ({ route }) => {
   const { gameId } = route.params;
   const [members, setMembers] = useState([]);
-  const [createdAt, setCreatedAt] = useState(null);
   const [hanchans, setHanchans] = useState<any[]>([]);
+  const [createdAt, setCreatedAt] = useState(null);
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -41,7 +41,8 @@ const HanchanListScreen = ({ route }) => {
 
       const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
       const hanchansSnapshot = await getDocs(hanchansCollection);
-      const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
+
       setHanchans(hanchansList);
     };
 
@@ -50,9 +51,12 @@ const HanchanListScreen = ({ route }) => {
 
   const handleAddRound = async () => {
     try {
-      navigation.navigate('ScoreInput', { gameId });
+      const newHanchanRef = await addDoc(collection(db, 'games', gameId, 'hanchan'), {
+        createdAt: new Date(),
+      });
+      navigation.navigate('ScoreInput', { gameId, hanchanId: newHanchanRef.id });
     } catch (error) {
-      console.error('Error navigating to ScoreInput:', error);
+      console.error('Error creating new hanchan:', error);
     }
   };
 
@@ -61,7 +65,7 @@ const HanchanListScreen = ({ route }) => {
   };
 
   return (
-    <ScrollView style={styles.container} scrollEventThrottle={400}>
+    <ScrollView style={styles.container}>
       <View style={styles.gameBox}>
         <Text style={styles.dateText}>{createdAt}</Text>
         <View style={styles.membersContainer}>
@@ -76,18 +80,16 @@ const HanchanListScreen = ({ route }) => {
         {hanchans.length === 0 ? (
           <Text style={styles.noDataText}>データがありません</Text>
         ) : (
-          <ScrollView>
-            {hanchans.map((hanchan, index) => (
-              <TouchableOpacity
-                key={hanchan.id}
-                style={styles.hanchanContainer}
-                onPress={() => handleHanchanPress(hanchan)}
-              >
-                <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
-                <Text style={styles.hanchanText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          hanchans.map((hanchan, index) => (
+            <TouchableOpacity
+              key={hanchan.id}
+              style={styles.hanchanContainer}
+              onPress={() => handleHanchanPress(hanchan)}
+            >
+              <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
+              <Text style={styles.hanchanText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
+            </TouchableOpacity>
+          ))
         )}
         <FAB style={styles.fab} small icon="plus" onPress={handleAddRound} />
       </View>

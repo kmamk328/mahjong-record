@@ -32,7 +32,7 @@ const InquireScreen = () => {
 
                 const hanchanQuery = collection(db, 'games', gameDoc.id, 'hanchan');
                 const hanchanSnapshot = await getDocs(hanchanQuery);
-                const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => hanchanDoc.data());
+                const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => ({ id: hanchanDoc.id, ...hanchanDoc.data(), gameId: gameDoc.id }));
 
                 gamesList.push({
                     id: gameDoc.id,
@@ -80,7 +80,7 @@ const InquireScreen = () => {
     };
 
     const handlePress = (game) => {
-        navigation.navigate('HanchanList', { gameId: game.id });
+        navigation.navigate('HanchanList', { game });
     };
 
     const onRefresh = () => {
@@ -93,7 +93,7 @@ const InquireScreen = () => {
         try {
             const newGameRef = await addDoc(collection(db, 'games'), {
                 createdAt: Timestamp.now(),
-                members: [], // 初期状態ではメンバーなし
+                members: [],
             });
             navigation.navigate('MemberInput', { gameId: newGameRef.id });
         } catch (error) {
