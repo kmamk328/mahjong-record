@@ -8,8 +8,8 @@ import { FAB } from 'react-native-paper'; // Floating Action Button
 const HanchanListScreen = ({ route }) => {
   const { gameId } = route.params;
   const [members, setMembers] = useState([]);
-  const [hanchans, setHanchans] = useState<any[]>([]);
   const [createdAt, setCreatedAt] = useState(null);
+  const [hanchans, setHanchans] = useState([]);
   const navigation = useNavigation();
 
   useLayoutEffect(() => {
@@ -37,22 +37,23 @@ const HanchanListScreen = ({ route }) => {
           })
         );
         setMembers(membersList);
+
+        const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
+        const hanchansSnapshot = await getDocs(hanchansCollection);
+        const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
+
+        setHanchans(hanchansList);
       }
-
-      const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
-      const hanchansSnapshot = await getDocs(hanchansCollection);
-      const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
-
-      setHanchans(hanchansList);
     };
 
     fetchGameData();
-  }, [gameId, route]);
+  }, [gameId,route]);
 
   const handleAddRound = async () => {
     try {
       const newHanchanRef = await addDoc(collection(db, 'games', gameId, 'hanchan'), {
         createdAt: new Date(),
+        members: [], // メンバーの初期値（必要に応じて設定）
       });
       navigation.navigate('ScoreInput', { gameId, hanchanId: newHanchanRef.id });
     } catch (error) {
@@ -65,7 +66,7 @@ const HanchanListScreen = ({ route }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} scrollEventThrottle={400}>
       <View style={styles.gameBox}>
         <Text style={styles.dateText}>{createdAt}</Text>
         <View style={styles.membersContainer}>
@@ -87,7 +88,7 @@ const HanchanListScreen = ({ route }) => {
               onPress={() => handleHanchanPress(hanchan)}
             >
               <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
-              <Text style={styles.hanchanText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
+              <Text style={styles.hanchanText}>日時: {hanchan.createdAt.toDate().toLocaleString()}</Text>
             </TouchableOpacity>
           ))
         )}
@@ -115,14 +116,6 @@ const styles = StyleSheet.create({
   memberText: {
     fontSize: 14,
     marginRight: 10,
-  },
-  roundContainer: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  roundText: {
-    fontSize: 16,
   },
   noDataText: {
     fontSize: 18,

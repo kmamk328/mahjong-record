@@ -11,7 +11,6 @@ const GameDetailsScreen: React.FC = () => {
   const route = useRoute<GameDetailsScreenRouteProp>();
   const { hanchan } = route.params;
   const [hanchanDetails, setHanchanDetails] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -26,7 +25,7 @@ const GameDetailsScreen: React.FC = () => {
         const roundsCollection = collection(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds');
         const roundsSnapshot = await getDocs(roundsCollection);
 
-        if (roundsSnapshot.docs.length === 0) {
+        if (roundsSnapshot.empty) {
           setHanchanDetails([{ ...hanchan, rounds: [] }]);
           return;
         }
@@ -34,10 +33,8 @@ const GameDetailsScreen: React.FC = () => {
         const rounds = await Promise.all(
           roundsSnapshot.docs.map(async (roundDoc) => {
             const round = roundDoc.data();
-            const winnerDoc = round.winner ? await getDoc(doc(db, `members/${round.winner}`)) : null;
-            const discarderDoc = round.discarder ? await getDoc(doc(db, `members/${round.discarder}`)) : null;
-            const winnerName = winnerDoc?.exists() ? winnerDoc.data().name : '流局';
-            const discarderName = discarderDoc?.exists() ? discarderDoc.data().name : 'つも';
+            const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
+            const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
             return { ...round, winnerName, discarderName };
           })
         );
@@ -45,26 +42,16 @@ const GameDetailsScreen: React.FC = () => {
         setHanchanDetails([{ ...hanchan, rounds }]);
       } catch (error) {
         console.error('Error fetching hanchan details:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchHanchanDetails();
   }, [hanchan]);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
   if (!hanchanDetails.length) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>No details available</Text>
+        <Text>Loading...</Text>
       </View>
     );
   }

@@ -80,7 +80,7 @@ const InquireScreen = () => {
     };
 
     const handlePress = (game) => {
-        navigation.navigate('HanchanList', { game });
+        navigation.navigate('HanchanList', { gameId: game.id });
     };
 
     const onRefresh = () => {
@@ -93,7 +93,7 @@ const InquireScreen = () => {
         try {
             const newGameRef = await addDoc(collection(db, 'games'), {
                 createdAt: Timestamp.now(),
-                members: [],
+                members: [], // 初期状態ではメンバーなし
             });
             navigation.navigate('MemberInput', { gameId: newGameRef.id });
         } catch (error) {
