@@ -14,7 +14,8 @@ const GameDetailsScreen: React.FC = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'ゲーム詳細',
+      headerTitle: '半壮詳細',
+      headerTitleAlign: 'center', 
     });
   }, [navigation]);
 
@@ -38,6 +39,17 @@ const GameDetailsScreen: React.FC = () => {
             return { ...round, winnerName, discarderName };
           })
         );
+        // Sort rounds
+        const sortedRounds = rounds.sort((a, b) => {
+          const placeOrder = { '東': 1, '南': 2, '西': 3, '北': 4 };
+          if (placeOrder[a.roundNumber.place] !== placeOrder[b.roundNumber.place]) {
+            return placeOrder[a.roundNumber.place] - placeOrder[b.roundNumber.place];
+          }
+          if (a.roundNumber.round !== b.roundNumber.round) {
+            return a.roundNumber.round - b.roundNumber.round;
+          }
+          return a.roundNumber.honba - b.roundNumber.honba;
+        });
 
         setHanchanDetails([{ ...hanchan, rounds }]);
       } catch (error) {
@@ -69,14 +81,16 @@ const GameDetailsScreen: React.FC = () => {
           <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
             <Text style={styles.hanchanText}>Hanchan: {hanchanDetail.id}</Text>
             {hanchanDetail.rounds && hanchanDetail.rounds.map((round, idx) => (
-              <View key={`${round.roundSeq}-${idx}`} style={styles.roundBox}>
-                <Text style={styles.roundText}>
-                  {round.roundNumber.place}場
-                  {round.roundNumber.round}局
-                  {round.roundNumber.honba}本場
-                </Text>
-                <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
-                <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
+              <View key={`${round.roundSeq}-${idx}`} style={styles.roundContainer}>
+                <View style={styles.roundBox}>
+                  <Text style={styles.roundText}>
+                    {round.roundNumber.place}場
+                    {round.roundNumber.round}局
+                    {round.roundNumber.honba}本場
+                  </Text>
+                  <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
+                  <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -125,7 +139,13 @@ const styles = StyleSheet.create({
   hanchanBox: {
     marginBottom: 16,
     padding: 16,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+  },
+  roundContainer: {
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#e0e0e0',
     borderRadius: 8,
   },
   roundBox: {

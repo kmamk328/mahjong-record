@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet, Button, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import MemberInput from '../components/MemberInput';
 
 const MemberInputScreen = ({ route }) => {
-  const { gameId } = route.params;
+  const { gameId } = route.params || {};
   const [members, setMembers] = useState(['', '', '', '']);
   const [existingMembers, setExistingMembers] = useState([]);
   const [reset, setReset] = useState(false);
@@ -22,6 +22,17 @@ const MemberInputScreen = ({ route }) => {
 
     fetchMembers();
   }, []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+        headerStyle: {
+            backgroundColor: '#FFFFFF',
+        },
+        headerTintColor: '#000',
+        headerTitle: 'メンバー入力画面',
+        headerTitleAlign: 'center', 
+    });
+  }, [navigation]);
 
   const handleChange = (text, index) => {
     const newMembers = [...members];
@@ -59,7 +70,7 @@ const MemberInputScreen = ({ route }) => {
     await proceedWithNext();
   };
 
-  const proceedWithNext = async () => {
+  const proceedWithNext = async (existingMemberId) => {
     const membersCollection = collection(db, 'members');
     const memberIds = [];
 
@@ -77,10 +88,12 @@ const MemberInputScreen = ({ route }) => {
       }
     }
 
-    const gameRef = doc(db, 'games', gameId);
-    await setDoc(gameRef, { createdAt: new Date(), members: memberIds }, { merge: true });
+    const newGameRef = await addDoc(collection(db, 'games'), {
+      createdAt: new Date(),
+      members: memberIds,
+    });
 
-    navigation.navigate('HanchanList', { gameId });
+    navigation.navigate('HanchanList', { gameId: newGameRef.id });
   };
 
   const handleClear = () => {
@@ -90,7 +103,7 @@ const MemberInputScreen = ({ route }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    // <ScrollView style={styles.container}>
       <View style={styles.memberInputBox}>
         <Text style={styles.getTitleText}>メンバーを入力してください</Text>
         <View style={styles.divider} />
@@ -102,6 +115,7 @@ const MemberInputScreen = ({ route }) => {
             onChange={(text) => handleChange(text, index)}
             placeholder={`メンバー ${index + 1}`}
             reset={reset} // Pass the reset state
+            label={`メンバー ${index + 1}`} // Add label prop
           />
         ))}
         <View style={styles.buttonContainer}>
@@ -109,7 +123,7 @@ const MemberInputScreen = ({ route }) => {
           <Button title="次へ" onPress={handleNext} />
         </View>
       </View>
-    </ScrollView>
+    // </ScrollView>
   );
 };
 
@@ -117,13 +131,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#ffffff',
   },
   memberInputBox: {
+    flex: 1, // 画面全体に広げるために追加
+    marginTop: 20, // 上部の余白を追加
+    marginLeft: 20, // 左右の余白を追加
+    marginRight: 20, // 左右の余白を追加
     marginBottom: 16,
     padding: 10,
     backgroundColor: '#ffffff',
-    borderColor: 'gray',
+    borderColor: '#DCDCDC',
     borderWidth: 1,
     borderRadius: 5,
     shadowColor: '#000', // 影の色
@@ -131,6 +148,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25, // 影の不透明度
     shadowRadius: 3.84, // 影のぼかし範囲
     elevation: 5, // Androidのための影の高さ
+    justifyContent: 'space-between', // 内容を上下に分けるために追加
   },
   input: {
     height: 40,

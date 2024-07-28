@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
 
@@ -17,7 +17,7 @@ const InquireScreen = () => {
     const fetchData = async (loadMore = false) => {
         try {
             const gamesCollection = collection(db, 'games');
-            const gamesQuery = query(gamesCollection, orderBy('createdAt', 'desc'), limit(10), ...(lastVisible ? [startAfter(lastVisible)] : []));
+            const gamesQuery = query(gamesCollection, orderBy('createdAt', 'desc'), limit(10), ...(lastVisible && loadMore ? [startAfter(lastVisible)] : []));
             const gamesSnapshot = await getDocs(gamesQuery);
 
             const gamesList = [];
@@ -69,6 +69,7 @@ const InquireScreen = () => {
             },
             headerTintColor: '#000',
             headerTitle: '戦績照会',
+            headerTitleAlign: 'center', 
         });
     }, [navigation]);
 
@@ -89,16 +90,9 @@ const InquireScreen = () => {
         fetchData(false);
     };
 
-    const handleAddGame = async () => {
-        try {
-            const newGameRef = await addDoc(collection(db, 'games'), {
-                createdAt: Timestamp.now(),
-                members: [], // 初期状態ではメンバーなし
-            });
-            navigation.navigate('MemberInput', { gameId: newGameRef.id });
-        } catch (error) {
-            console.error('Error adding new game:', error);
-        }
+    const handleAddGame = () => {
+        // メンバー入力画面にナビゲートする
+        navigation.navigate('MemberInput');
     };
 
     if (loading) {

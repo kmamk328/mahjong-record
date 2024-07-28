@@ -107,6 +107,7 @@ const ScoreInputScreen = () => {
       },
       headerTintColor: '#000',
       headerTitle: 'スコア入力',
+      headerTitleAlign: 'center', 
     });
   }, [navigation]);
 
@@ -300,7 +301,7 @@ const ScoreInputScreen = () => {
         {
           text: "保存",
           onPress: async () => {
-            await handleNext();  // 最新のデータを保存
+            // await handleNext();  // 最新のデータを保存
             navigation.navigate('HanchanList', { gameId });  // 全半壮照会画面に遷移
           }
         }

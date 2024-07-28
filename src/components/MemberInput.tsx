@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons'; // Ensure you have installed @expo/vector-icons
 
-const MemberInput = ({ existingMembers, onChange, value, placeholder, reset }) => {
+const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, label }) => {
   const [isCustomInput, setIsCustomInput] = useState(false);
 
   useEffect(() => {
@@ -25,6 +25,7 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset }) =
 
   return (
     <View style={styles.container}>
+      <Text style={styles.label}>{label}</Text>
       {isCustomInput ? (
         <TextInput
           style={styles.input}
@@ -56,15 +57,18 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset }) =
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    marginBottom:10, // `flexDirection: 'row'` と `alignItems: 'center'` を削除し、ラベルとピッカーを垂直に並べる
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
   },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    flex: 1,
+    width: '100%', // 幅を100%にしてピッカーを広げる
+    // flex: 1,
     paddingLeft: 10,
     backgroundColor: '#fff',
     borderRadius: 4,

@@ -19,6 +19,7 @@ const HanchanListScreen = ({ route }) => {
       },
       headerTintColor: '#000',
       headerTitle: '全半壮照会',
+      headerTitleAlign: 'center', 
     });
   }, [navigation]);
 
@@ -40,14 +41,17 @@ const HanchanListScreen = ({ route }) => {
 
         const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
         const hanchansSnapshot = await getDocs(hanchansCollection);
-        const hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
+        let hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
+
+        // Sort hanchans by createdAt in ascending order
+        hanchansList = hanchansList.sort((a, b) => a.createdAt.toDate() - b.createdAt.toDate());
 
         setHanchans(hanchansList);
       }
     };
 
     fetchGameData();
-  }, [gameId,route]);
+  }, [gameId, route]);
 
   const handleAddRound = async () => {
     try {
