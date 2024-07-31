@@ -60,8 +60,8 @@ export default function App() {
         />
         <Tab.Screen
           name="アカウント"
-          // component={LoginScreen}
-          component={TestScreen}
+          component={LoginScreen}
+          // component={TestScreen}
           options={{ headerShown: false }}
         />
       </Tab.Navigator>

@@ -1,76 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import * as GoogleSignIn from 'expo-google-sign-in';
+import * as Google from 'expo-auth-session/providers/google';
+import { ResponseType } from 'expo-auth-session';
 import { auth } from '../../firebaseConfig';
+import * as WebBrowser from 'expo-web-browser';
+import { GoogleAuthProvider } from 'firebase/auth';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    webClientId: "546966390190-t4belgq5uu6kr3iq3q6psd1jhai7ce7g.apps.googleusercontent.com",  // ここにGoogle Cloud Consoleから取得したWeb client IDを設定
+  });
 
-  // Googleサインインの初期化
-  React.useEffect(() => {
-    initAsync();
-  }, []);
-
-  const initAsync = async () => {
-    await GoogleSignIn.initAsync({
-      clientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
-    });
-    _syncUserWithStateAsync();
-  };
-
-  const _syncUserWithStateAsync = async () => {
-    const user = await GoogleSignIn.signInSilentlyAsync();
-    setUser(user);
-  };
-
-  // メールアドレスでのログイン処理
-  const handleEmailLogin = async () => {
-    try {
-      await auth().signInWithEmailAndPassword(email, password);
-    } catch (err) {
-      setError(err.message);
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      const credential = auth.GoogleAuthProvider.credential(id_token);
+      auth().signInWithCredential(credential);
     }
-  };
-
-  // Googleでのログイン処理
-  const handleGoogleLogin = async () => {
-    try {
-      await GoogleSignIn.askForPlayServicesAsync();
-      const { type, user } = await GoogleSignIn.signInAsync();
-      if (type === 'success') {
-        _syncUserWithStateAsync();
-        const credential = auth.GoogleAuthProvider.credential(user.auth.idToken);
-        await auth().signInWithCredential(credential);
-      }
-    } catch ({ message }) {
-      setError('Googleログインエラー: ' + message);
-    }
-  };
+  }, [response]);
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
+      <Button
+        disabled={!request}
+        title="Googleでログイン"
+        onPress={() => {
+          promptAsync();
+        }}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="メールでログイン" onPress={handleEmailLogin} />
-      <Button title="Googleでログイン" onPress={handleGoogleLogin} style={styles.googleButton} />
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -86,6 +48,10 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     marginTop: 10,
+  },
+  guestButton: {
+    marginTop: 10,
+    backgroundColor: '#ccc',
   },
   errorText: {
     color: 'red',

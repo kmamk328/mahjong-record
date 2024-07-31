@@ -1,0 +1,39 @@
+デバッグ用のSHA-1 署名証明書フィンガープリントを取得する
+keytool -list -v -keystore "C:\koma\project_reactnative\majang-record\android\app\debug.keystore" -alias androiddebugkey -storepass android -keypass android
+
+C:\Users\81905>keytool -list -v -keystore "C:\koma\project_reactnative\majang-record\android\app\debug.keystore" -alias androiddebugkey -storepass android -keypass android
+別名: androiddebugkey
+作成日: 2014/01/01
+エントリ・タイプ: PrivateKeyEntry
+証明書チェーンの長さ: 1
+証明書[1]:
+所有者: CN=Android Debug, OU=Android, O=Unknown, L=Unknown, ST=Unknown, C=US
+発行者: CN=Android Debug, OU=Android, O=Unknown, L=Unknown, ST=Unknown, C=US
+シリアル番号: 232eae62
+有効期間の開始日: Wed Jan 01 07:35:04 GMT+09:00 2014終了日: Wed May 01 07:35:04 GMT+09:00 2052
+証明書のフィンガプリント:
+         SHA1: 5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25
+         SHA256: FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
+署名アルゴリズム名: SHA1withRSA (弱)
+サブジェクト公開キー・アルゴリズム: 2048ビットRSAキー
+バージョン: 3
+
+拡張:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 0B F9 FE 38 89 D2 8A 9C   58 F0 C1 0A B7 0E 43 28  ...8....X.....C(
+0010: D8 23 F3 20                                        .#.
+]
+]
+
+
+Warning:
+証明書はSHA1withRSA署名アルゴリズムを使用しており、これはセキュリティ・リスクとみなされます。
+JKSキーストアは独自の形式を使用しています。"keytool -importkeystore -srckeystore C:\koma\project_reactnative\majang-record\android\app\debug.keystore -destkeystore C:\koma\project_reactnative\majang-record\android\app\debug.keystore -deststoretype pkcs12"を使用する業界標準の形式であるPKCS12に移行することをお薦めします。
+
+
+
+Oauthクライアント作成時に提示されたクライアントID
+546966390190-t4belgq5uu6kr3iq3q6psd1jhai7ce7g.apps.googleusercontent.com
