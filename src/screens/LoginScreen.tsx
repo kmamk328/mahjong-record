@@ -1,82 +1,96 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
-import auth from '@react-native-firebase/auth';
+import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+import * as GoogleSignIn from 'expo-google-sign-in';
+import { auth } from '../../firebaseConfig';
 
-const LoginScreen: React.FC = ({ navigation }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+const LoginScreen = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-    const handleLogin = async () => {
-        try {
-        await auth().signInWithEmailAndPassword(email, password);
-        Alert.alert('ログイン成功', 'ログインしました。');
-        // ログイン成功後、メイン画面に遷移する
-        navigation.navigate('Main');
-        } catch (error) {
-        Alert.alert('ログイン失敗', error.message);
-        }
-    };
+  // Googleサインインの初期化
+  React.useEffect(() => {
+    initAsync();
+  }, []);
 
-    const handleSignUp = async () => {
-        try {
-        await auth().createUserWithEmailAndPassword(email, password);
-        Alert.alert('アカウント作成成功', 'アカウントが作成されました。');
-        // アカウント作成成功後、ログイン処理を行う
-        handleLogin();
-        } catch (error) {
-        Alert.alert('アカウント作成失敗', error.message);
-        }
-    };
+  const initAsync = async () => {
+    await GoogleSignIn.initAsync({
+      clientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
+    });
+    _syncUserWithStateAsync();
+  };
 
-    return (
-        <View style={styles.container}>
-        <Text style={styles.title}>ログイン</Text>
-        <TextInput
-            style={styles.input}
-            placeholder="メールアドレス"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-        />
-        <TextInput
-            style={styles.input}
-            placeholder="パスワード"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-        />
-        <Button title="ログイン" onPress={handleLogin} />
-        <TouchableOpacity onPress={handleSignUp}>
-            <Text style={styles.signupText}>アカウントを作成する</Text>
-        </TouchableOpacity>
-        </View>
-    );
+  const _syncUserWithStateAsync = async () => {
+    const user = await GoogleSignIn.signInSilentlyAsync();
+    setUser(user);
+  };
+
+  // メールアドレスでのログイン処理
+  const handleEmailLogin = async () => {
+    try {
+      await auth().signInWithEmailAndPassword(email, password);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Googleでのログイン処理
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignIn.askForPlayServicesAsync();
+      const { type, user } = await GoogleSignIn.signInAsync();
+      if (type === 'success') {
+        _syncUserWithStateAsync();
+        const credential = auth.GoogleAuthProvider.credential(user.auth.idToken);
+        await auth().signInWithCredential(credential);
+      }
+    } catch ({ message }) {
+      setError('Googleログインエラー: ' + message);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Button title="メールでログイン" onPress={handleEmailLogin} />
+      <Button title="Googleでログイン" onPress={handleGoogleLogin} style={styles.googleButton} />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    </View>
+  );
 };
 
-    const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-    },
-    title: {
-        fontSize: 24,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    input: {
-        height: 40,
-        borderColor: 'gray',
-        borderWidth: 1,
-        marginBottom: 10,
-        paddingLeft: 10,
-    },
-    signupText: {
-        marginTop: 20,
-        color: 'blue',
-        textAlign: 'center',
-    },
-    });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 12,
+    paddingLeft: 10,
+  },
+  googleButton: {
+    marginTop: 10,
+  },
+  errorText: {
+    color: 'red',
+    marginTop: 10,
+  },
+});
 
 export default LoginScreen;

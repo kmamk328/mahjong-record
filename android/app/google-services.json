@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "476948101334",
+    "project_id": "majangrecords",
+    "storage_bucket": "majangrecords.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476948101334:android:eb94bf8e628fdd3d11b177",
+        "android_client_info": {
+          "package_name": "com.anonymous.majangrecord"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "476948101334-66ic8v6h2t6301uvbc7houav14uulolm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBh5DbRaeQX_XG5wmxcAMlkB2M9_xeYGn8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "476948101334-66ic8v6h2t6301uvbc7houav14uulolm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
