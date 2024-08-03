@@ -4,14 +4,18 @@ import * as Google from 'expo-auth-session/providers/google';
 import { ResponseType } from 'expo-auth-session';
 import { auth } from '../../firebaseConfig';
 import * as WebBrowser from 'expo-web-browser';
-import { GoogleAuthProvider } from 'firebase/auth';
+import { GoogleAuthProvider, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: "546966390190-t4belgq5uu6kr3iq3q6psd1jhai7ce7g.apps.googleusercontent.com",  // ここにGoogle Cloud Consoleから取得したWeb client IDを設定
+    clientId: "546966390190-t4belgq5uu6kr3iq3q6psd1jhai7ce7g.apps.googleusercontent.com",  // ここにGoogle Cloud Consoleから取得したWeb client IDを設定
   });
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -21,8 +25,40 @@ const LoginScreen = () => {
     }
   }, [response]);
 
+  const handleEmailLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    try {
+      await signInAnonymously(auth);
+    } catch (error) {
+      console.error('ゲストログインエラー:', error);
+    }
+  };
+
+
   return (
     <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Button title="メールでログイン" onPress={handleEmailLogin} />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
       <Button
         disabled={!request}
         title="Googleでログイン"
@@ -30,6 +66,7 @@ const LoginScreen = () => {
           promptAsync();
         }}
       />
+      <Button title="ゲストとしてログイン" onPress={handleGuestLogin} />
     </View>
   );
 };

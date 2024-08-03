@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, ScrollView, Text, StyleSheet, Button, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Text, StyleSheet, Button, Alert, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { db, auth } from '../../firebaseConfig'; // Firebase authentication instance
 import MemberInput from '../components/MemberInput';
 
 const MemberInputScreen = ({ route }) => {
+  // const { gameId } = route.params || {};
   const { gameId } = route.params || {};
-  const [members, setMembers] = useState(['', '', '', '']);
+  const [members, setMembers] = useState(['', '', '', '']); // 「あなた」を最初に設定
   const [existingMembers, setExistingMembers] = useState([]);
   const [reset, setReset] = useState(false);
   const navigation = useNavigation();
@@ -18,23 +19,23 @@ const MemberInputScreen = ({ route }) => {
       const membersSnapshot = await getDocs(membersCollection);
       const membersList = membersSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
       setExistingMembers(membersList);
+      console.log("保存されているメンバー:", membersList);
     };
 
     fetchMembers();
   }, []);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-        headerStyle: {
-            backgroundColor: '#FFFFFF',
-        },
-        headerTintColor: '#000',
-        headerTitle: 'メンバー入力画面',
-        headerTitleAlign: 'center', 
-    });
-  }, [navigation]);
+  // useEffect(() => {
+  //   // 匿名認証されたユーザーのUIDを「あなた」に設定
+  //   const currentUser = auth.currentUser;
+  //   if (currentUser) {
+  //     setMembers((prevMembers) => [currentUser.uid, ...prevMembers.slice(1)]);
+  //   }
+  // }, []);
 
   const handleChange = (text, index) => {
+    // if (index === 0) return; // 「あなた」の入力エリアは変更不可
+
     const newMembers = [...members];
     newMembers[index] = text;
     setMembers(newMembers);
@@ -78,7 +79,7 @@ const MemberInputScreen = ({ route }) => {
       if (member === '') continue;
 
       const existingMember = existingMembers.find(existingMember => existingMember.name === member);
-
+      console.log("existingMember:", existingMember);
       if (existingMember) {
         memberIds.push(existingMember.id);
       } else {
@@ -97,33 +98,48 @@ const MemberInputScreen = ({ route }) => {
   };
 
   const handleClear = () => {
-    setMembers(['', '', '', '']);
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      setMembers(['', '', '', '']);
+    }
     setReset(true);
-    setTimeout(() => setReset(false), 0); // Reset the `reset` state to false
+    setTimeout(() => setReset(false), 0);
   };
 
   return (
-    // <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.memberInputBox}>
         <Text style={styles.getTitleText}>メンバーを入力してください</Text>
         <View style={styles.divider} />
+
+        {/* <View style={styles.container}>
+          <Text style={styles.label}>メンバー 1</Text>
+          <TextInput
+            style={styles.input} // 背景色をグレーにして編集不可を視覚的に表示
+            value="あなた"
+            editable={false} // 編集不可
+          />
+        </View> */}
+
         {members.map((member, index) => (
           <MemberInput
             key={index}
             existingMembers={existingMembers.map(member => member.name)}
             value={member}
             onChange={(text) => handleChange(text, index)}
-            placeholder={`メンバー ${index + 1}`}
+            // placeholder={`メンバー ${index + 1}`}
+            placeholder={`メンバー`}
             reset={reset} // Pass the reset state
             label={`メンバー ${index + 1}`} // Add label prop
           />
         ))}
+
         <View style={styles.buttonContainer}>
           <Button title="クリア" onPress={handleClear} />
           <Button title="次へ" onPress={handleNext} />
         </View>
       </View>
-    // </ScrollView>
+    </ScrollView>
   );
 };
 
@@ -133,35 +149,38 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   memberInputBox: {
-    flex: 1, // 画面全体に広げるために追加
-    marginTop: 20, // 上部の余白を追加
-    marginLeft: 20, // 左右の余白を追加
-    marginRight: 20, // 左右の余白を追加
+    flex: 1,
+    marginTop: 20,
+    marginLeft: 20,
+    marginRight: 20,
     marginBottom: 16,
     padding: 10,
     backgroundColor: '#ffffff',
     borderColor: '#DCDCDC',
     borderWidth: 1,
     borderRadius: 5,
-    shadowColor: '#000', // 影の色
-    shadowOffset: { width: 0, height: 2 }, // 影のオフセット
-    shadowOpacity: 0.25, // 影の不透明度
-    shadowRadius: 3.84, // 影のぼかし範囲
-    elevation: 5, // Androidのための影の高さ
-    justifyContent: 'space-between', // 内容を上下に分けるために追加
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    justifyContent: 'space-between',
   },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    marginBottom: 10,
+    width: '100%', // 幅を100%にしてピッカーを広げる
+    // flex: 1,
     paddingLeft: 10,
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
-    elevation: 5,
+    borderRadius: 4,
+    flexDirection: 'row', // Add this line to align the picker and icon horizontally
+    alignItems: 'center', // Add this line to vertically center the picker and icon
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
   },
   getTitleText: {
     fontSize: 20,

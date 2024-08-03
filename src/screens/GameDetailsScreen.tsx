@@ -36,6 +36,7 @@ const GameDetailsScreen: React.FC = () => {
             const round = roundDoc.data();
             const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
             const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
+            console.log("あがった人:", winnerName);
             return { ...round, winnerName, discarderName };
           })
         );

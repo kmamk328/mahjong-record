@@ -36,4 +36,8 @@ JKSキーストアは独自の形式を使用しています。"keytool -importk
 
 
 Oauthクライアント作成時に提示されたクライアントID
+android
 546966390190-t4belgq5uu6kr3iq3q6psd1jhai7ce7g.apps.googleusercontent.com
+
+webアプリケーション
+546966390190-cnm9esjujebs99hjne2infc0ukf736a7.apps.googleusercontent.com

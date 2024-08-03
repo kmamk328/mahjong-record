@@ -3,6 +3,7 @@ import 'regenerator-runtime/runtime';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 
 import MemberInputScreen from './src/screens/MemberInputScreen';
 import ScoreInputScreen from './src/screens/ScoreInputScreen';
@@ -11,10 +12,22 @@ import InquireScreen from './src/screens/InquireScreen';
 import GameDetailsScreen from './src/screens/GameDetailsScreen';
 import HanchanListScreen from './src/screens/HanchanListScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
 import TestScreen from './src/screens/TestScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+
+const auth = getAuth();
+signInAnonymously(auth)
+  .then(() => {
+    console.log('Signed in anonymously');
+    console.log(auth.currentUser?.uid);
+  })
+  .catch((error) => {
+    console.error('Error signing in anonymously: ', error);
+  });
 
 function MainStackNavigator() {
   return (
@@ -43,6 +56,15 @@ function InquireStackNavigator() {
   );
 }
 
+function DashborardStackNavigator() {
+  return (
+    <Stack.Navigator initialRouteName="Dashboard">
+      <Stack.Screen name="Dashboard" component={DashboardScreen} />
+    </Stack.Navigator>
+  );
+}
+
+
 export default function App() {
   return (
     <NavigationContainer>
@@ -54,14 +76,15 @@ export default function App() {
         />
         <Tab.Screen
           name="記録"
-          // component={MainStackNavigator}
-          component={TestScreen}
+          component={DashborardStackNavigator}
+          // component={DashboardScreen}
+          // component={TestScreen}
           options={{ headerShown: false }}
         />
         <Tab.Screen
           name="アカウント"
-          component={LoginScreen}
-          // component={TestScreen}
+          // component={LoginScreen}
+          component={TestScreen}
           options={{ headerShown: false }}
         />
       </Tab.Navigator>

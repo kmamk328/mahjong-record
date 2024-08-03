@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect} from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
@@ -18,7 +18,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 type RootStackParamList = {
   ScoreInput: { gameId: string };
-  // 他のスクリーンもここに追加
 };
 
 type ScoreInputScreenNavigationProp = StackNavigationProp<
@@ -27,11 +26,6 @@ type ScoreInputScreenNavigationProp = StackNavigationProp<
 >;
 
 type ScoreInputScreenRouteProp = RouteProp<RootStackParamList, 'ScoreInput'>;
-
-type Props = {
-  navigation: ScoreInputScreenNavigationProp;
-  route: ScoreInputScreenRouteProp;
-};
 
 const ScoreInputScreen = () => {
   const [currentRound, setCurrentRound] = useState({
@@ -48,9 +42,16 @@ const ScoreInputScreen = () => {
     roles: [],
     dora: 0,
     uraDora: 0,
-    roundSeq: 0
+    roundSeq: 0,
   });
   const [members, setMembers] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [pickerType, setPickerType] = useState('');
+  const [availablePoints, setAvailablePoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const [filteredPoints, setFilteredPoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { gameId } = route.params;
   const [rolesOptions, setRolesOptions] = useState([
     { role: 'リーチ', points: 1 },
     { role: '一発(イッパツ)', points: 1 },
@@ -78,16 +79,10 @@ const ScoreInputScreen = () => {
     { role: '純全帯么(ジュンチャンタ)', points: 1 },
     { role: '清一色（チンイツ）', points: 1 },
   ]);
-  const [availablePoints, setAvailablePoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-  const [filteredPoints, setFilteredPoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-  const [modalVisible, setModalVisible] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [rounds, setRounds] = useState([]);
   const [roundSeq, setRoundSeq] = useState(0);
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { gameId } = route.params;
   const [isTsumo, setIsTsumo] = useState(false);
   const [isNaki, setIsNaki] = useState(false);
   const [isReach, setIsReach] = useState(false);
@@ -99,6 +94,93 @@ const ScoreInputScreen = () => {
   const [previousRound, setPreviousRound] = useState(null);
   const [nextRound, setNextRound] = useState(null);
   const [hanchanId, setHanchanId] = useState(null);
+
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: '#FFFFFF',
+      },
+      headerTintColor: '#000',
+      headerTitle: 'スコア入力',
+      headerTitleAlign: 'center',
+    });
+  }, [navigation]);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const gameDoc = await getDoc(doc(db, 'games', gameId));
+      const gameData = gameDoc.data();
+      if (!gameData) throw new Error('ゲームデータが見つかりません');
+      const memberIds = gameData.members;
+      const memberNames = [];
+      for (const memberId of memberIds) {
+        const memberDoc = await getDoc(doc(db, 'members', memberId));
+        const memberData = memberDoc.data();
+        if (memberData) {
+          memberNames.push({ id: memberId, name: memberData.name });
+        }
+      }
+      setMembers(memberNames);
+      console.log("メンバー:", memberNames);
+    };
+
+    const fetchHanchan = async () => {
+      const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
+      const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
+      if (!hanchanSnapshot.empty) {
+        const latestHanchan = hanchanSnapshot.docs[0];
+        setCurrentRound({ ...currentRound, roundSeq: latestHanchan.data().roundSeq + 1 });
+      } else {
+        const newHanchanRef = await addDoc(hanchanCollection, { createdAt: new Date() });
+        setCurrentRound({ ...currentRound, roundSeq: 1 });
+      }
+    };
+
+    fetchMembers();
+    fetchHanchan();
+  }, [gameId]);
+
+  const handlePickerChange = (value) => {
+    setModalVisible(false);
+    switch (pickerType) {
+      case 'place':
+        setCurrentRound({
+          ...currentRound,
+          roundNumber: { ...currentRound.roundNumber, place: value },
+        });
+        break;
+      case 'round':
+        setCurrentRound({
+          ...currentRound,
+          roundNumber: { ...currentRound.roundNumber, round: value },
+        });
+        break;
+      case 'honba':
+        setCurrentRound({
+          ...currentRound,
+          roundNumber: { ...currentRound.roundNumber, honba: value },
+        });
+        break;
+      case 'winner':
+        setCurrentRound({ ...currentRound, winner: value });
+        break;
+      case 'discarder':
+        setCurrentRound({ ...currentRound, discarder: value });
+        break;
+      case 'winnerPoints':
+        setCurrentRound({ ...currentRound, winnerPoints: value });
+        break;
+      case 'dora':
+        setCurrentRound({ ...currentRound, dora: value });
+        break;
+      case 'uraDora':
+        setCurrentRound({ ...currentRound, uraDora: value });
+        break;
+      default:
+        break;
+    }
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -406,170 +488,128 @@ const ScoreInputScreen = () => {
     );
   };
 
+  const openPicker = (type) => {
+    setPickerType(type);
+    setModalVisible(true);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.innerContainer}>
         <View style={styles.roundContainer}>
-          <View style={styles.roundRow}>
-            <View style={styles.roundPickerContainer}>
-              <Picker
-                selectedValue={currentRound.roundNumber.place}
-                style={styles.roundPicker}
-                onValueChange={(itemValue) => handleRoundNumberChange('place', itemValue)}
-                itemStyle={styles.pickerRoundItem}
-              >
-                {['東', '南', '西', '北'].map((place) => (
-                  <Picker.Item key={place} label={place} value={place} />
-                ))}
-              </Picker>
+          <TouchableOpacity onPress={() => openPicker('place')}>
+            <View style={styles.input}>
+              <Text>{currentRound.roundNumber.place}</Text>
             </View>
-            <Text style={styles.roundTextInline}> 場 </Text>
-          </View>
+          </TouchableOpacity>
+          <Text style={styles.roundTextInline}> 場 </Text>
 
-          <View style={styles.roundRow}>
-            <View style={styles.roundPickerContainer}>
-              <Picker
-                selectedValue={currentRound.roundNumber.round}
-                style={styles.roundPicker}
-                onValueChange={(itemValue) => handleRoundNumberChange('round', itemValue)}
-                itemStyle={styles.pickerRoundItem}
-              >
-                {[1, 2, 3, 4].map((round) => (
-                  <Picker.Item key={round} label={round.toString()} value={round.toString()} />
-                ))}
-              </Picker>
+          <TouchableOpacity onPress={() => openPicker('round')}>
+            <View style={styles.input}>
+              <Text>{currentRound.roundNumber.round}</Text>
             </View>
-            <Text style={styles.roundTextInline}> 局 </Text>
-          </View>
+          </TouchableOpacity>
+          <Text style={styles.roundTextInline}> 局 </Text>
 
-          <View style={styles.roundRow}>
-            <View style={styles.roundPickerContainer}>
-              <Picker
-                selectedValue={currentRound.roundNumber.honba}
-                style={styles.roundPicker}
-                onValueChange={(itemValue) => handleRoundNumberChange('honba', itemValue)}
-                itemStyle={styles.pickerRoundItem}
-              >
-                {Array.from({ length: 21 }, (_, i) => i).map((honba) => (
-                  <Picker.Item key={honba} label={honba.toString()} value={honba.toString()} />
-                ))}
-              </Picker>
+          <TouchableOpacity onPress={() => openPicker('honba')}>
+            <View style={styles.input}>
+              <Text>{currentRound.roundNumber.honba}</Text>
             </View>
-            <Text style={styles.roundTextInline}> 本場 </Text>
-          </View>
+          </TouchableOpacity>
+          <Text style={styles.roundTextInline}> 本場 </Text>
         </View>
 
+        {/* 流局のSwitchと聴牌者の選択 */}
         <View style={styles.switchContainer}>
           <Text style={styles.discarderLabel}>流局:</Text>
-            <Switch value={currentRound.isRyuukyoku} onValueChange={() => setCurrentRound({ ...currentRound, isRyuukyoku: !currentRound.isRyuukyoku })} />
+          <Switch
+            value={currentRound.isRyuukyoku}
+            onValueChange={() =>
+              setCurrentRound({ ...currentRound, isRyuukyoku: !currentRound.isRyuukyoku })
+            }
+          />
         </View>
 
         {currentRound.isRyuukyoku ? (
-        <View>
-          <Text style={styles.discarderLabel}>聴牌者を選択してください</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={currentRound.winner}
-              onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winner: itemValue })}
-            >
-              {members.map((member) => (
-                <Picker.Item key={member.id} label={member.name} value={member.id} />
-              ))}
-            </Picker>
+          <View>
+            <Text style={styles.discarderLabel}>聴牌者を選択してください</Text>
+            <TouchableOpacity onPress={() => openPicker('winner')}>
+              <View style={styles.input}>
+                <Text>{currentRound.winner ? currentRound.winner : '聴牌者を選択'}</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-        </View>
         ) : (
           <>
-        <View>
-          <Text style={styles.discarderLabel}>あがったひと</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={currentRound.winner}
-              onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winner: itemValue })}
-            >
-              {members.map((member) => (
-                <Picker.Item key={member.id} label={member.name} value={member.id} />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.switchContainer}>
-            <Text style={styles.discarderLabel}>親：</Text>
-            <Switch
-              value={currentRound.isOya}
-              onValueChange={() => setCurrentRound({ ...currentRound, isOya: !currentRound.isOya })}
-            />
-          </View>
-        </View>
-        <View style={styles.switchContainer}>
-          <Text style={styles.discarderLabel}>ツモ:</Text>
-          <Switch value={currentRound.isTsumo} onValueChange={() => setCurrentRound({ ...currentRound, isTsumo: !currentRound.isTsumo })} />
-          <Text style={styles.discarderLabel}>鳴き:</Text>
-          <Switch value={currentRound.isNaki} onValueChange={() => setCurrentRound({ ...currentRound, isNaki: !currentRound.isNaki })} />
-          <Text style={styles.discarderLabel}> リーチ:</Text>
-          <Switch value={currentRound.isReach} onValueChange={() => setCurrentRound({ ...currentRound, isReach: !currentRound.isReach })} />
-        </View>
-        <View>
-          <Text style={styles.discarderLabel}>あがり点</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={currentRound.winnerPoints}
-              onValueChange={(itemValue) => setCurrentRound({ ...currentRound, winnerPoints: itemValue })}
-            >
-              {availablePoints.map((point, index) => (
-                <Picker.Item key={index} label={point.toString()} value={point.toString()} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-            <Text style={styles.discarderLabel}>あがった役:</Text>
-            <View style={styles.rolesContainer}>
-              {selectedRoles.map((role, index) => (
-                <View key={index} style={styles.roleButton}>
-                  <Text>{role}</Text>
+            <View>
+              <Text style={styles.discarderLabel}>あがったひと</Text>
+              <TouchableOpacity onPress={() => openPicker('winner')}>
+                <View style={styles.input}>
+                  <Text>{currentRound.winner ? currentRound.winner : 'あがった人を選択'}</Text>
                 </View>
-              ))}
+              </TouchableOpacity>
+
+              <View style={styles.switchContainer}>
+                <Text style={styles.discarderLabel}>親：</Text>
+                <Switch
+                  value={currentRound.isOya}
+                  onValueChange={() =>
+                    setCurrentRound({ ...currentRound, isOya: !currentRound.isOya })
+                  }
+                />
+              </View>
             </View>
-            <Button title="あがった役を選択" onPress={() => setModalVisible(true)} />
-            <Text style={styles.discarderLabel}>ドラの数:</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={currentRound.dora}
-                onValueChange={(itemValue) => setCurrentRound({ ...currentRound, dora: itemValue })}
-              >
-                {Array.from({ length: 21 }, (_, i) => i.toString()).map((num) => (
-                  <Picker.Item key={num} label={num} value={num} />
-                ))}
-              </Picker>
+
+            <View style={styles.switchContainer}>
+              <Text style={styles.discarderLabel}>ツモ:</Text>
+              <Switch
+                value={currentRound.isTsumo}
+                onValueChange={() =>
+                  setCurrentRound({ ...currentRound, isTsumo: !currentRound.isTsumo })
+                }
+              />
+              <Text style={styles.discarderLabel}>鳴き:</Text>
+              <Switch
+                value={currentRound.isNaki}
+                onValueChange={() =>
+                  setCurrentRound({ ...currentRound, isNaki: !currentRound.isNaki })
+                }
+              />
+              <Text style={styles.discarderLabel}> リーチ:</Text>
+              <Switch
+                value={currentRound.isReach}
+                onValueChange={() =>
+                  setCurrentRound({ ...currentRound, isReach: !currentRound.isReach })
+                }
+              />
             </View>
-            <Text style={styles.discarderLabel}>裏ドラの数:</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={currentRound.uraDora}
-                onValueChange={(itemValue) => setCurrentRound({ ...currentRound, uraDora: itemValue })}
-              >
-                {Array.from({ length: 21 }, (_, i) => i.toString()).map((num) => (
-                  <Picker.Item key={num} label={num} value={num} />
-                ))}
-              </Picker>
+
+            <View>
+              <Text style={styles.discarderLabel}>あがり点</Text>
+              <TouchableOpacity onPress={() => openPicker('winnerPoints')}>
+                <View style={styles.input}>
+                  <Text>
+                    {currentRound.winnerPoints ? currentRound.winnerPoints : 'あがり点を選択'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
 
             {!currentRound.isTsumo && (
               <View>
                 <Text style={styles.discarderLabel}>放銃したひと:</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={currentRound.discarder}
-                    onValueChange={(itemValue) => setCurrentRound({ ...currentRound, discarder: itemValue })}
-                  >
-                    {members.map((member) => (
-                      <Picker.Item key={member.id} label={member.name} value={member.id} />
-                    ))}
-                  </Picker>
-                </View>
+                <TouchableOpacity onPress={() => openPicker('discarder')}>
+                  <View style={styles.input}>
+                    <Text>
+                      {currentRound.discarder ? currentRound.discarder : '放銃した人を選択'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
             )}
           </>
         )}
+
         <View style={styles.buttonContainer}>
           <Button title="前へ" onPress={() => console.log('前へ')} />
           <Button title="終了" onPress={handleFinish} />
@@ -577,26 +617,63 @@ const ScoreInputScreen = () => {
         </View>
       </View>
 
-      <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>あがった役を選択</Text>
-          <ScrollView>
-            {rolesOptions.map((roleObj, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.roleButton,
-                  selectedRoles.includes(roleObj.role) ? styles.selectedRoleButton : styles.unselectedRoleButton
-                ]}
-                onPress={() => toggleRoleSelection(roleObj.role)}
-              >
-                <Text>{roleObj.role}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          <View style={styles.modalButtonContainer}>
-            <Button title="全解除" onPress={clearAllRolesSelection} />
-            <Button title="OK" onPress={confirmRolesSelection} />
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={
+                pickerType === 'place'
+                  ? currentRound.roundNumber.place
+                  : pickerType === 'round'
+                  ? currentRound.roundNumber.round
+                  : pickerType === 'honba'
+                  ? currentRound.roundNumber.honba
+                  : pickerType === 'winner'
+                  ? currentRound.winner
+                  : pickerType === 'discarder'
+                  ? currentRound.discarder
+                  : pickerType === 'winnerPoints'
+                  ? currentRound.winnerPoints
+                  : pickerType === 'dora'
+                  ? currentRound.dora
+                  : currentRound.uraDora
+              }
+              onValueChange={handlePickerChange}
+            >
+              {pickerType === 'place' &&
+                ['東', '南', '西', '北'].map((place) => (
+                  <Picker.Item key={place} label={place} value={place} />
+                ))}
+              {pickerType === 'round' &&
+                [1, 2, 3, 4].map((round) => (
+                  <Picker.Item key={round} label={round.toString()} value={round.toString()} />
+                ))}
+              {pickerType === 'honba' &&
+                Array.from({ length: 21 }, (_, i) => i).map((honba) => (
+                  <Picker.Item key={honba} label={honba.toString()} value={honba.toString()} />
+                ))}
+              {pickerType === 'winner' &&
+                members.map((member) => (
+                  <Picker.Item key={member.id} label={member.name} value={member.name} />
+                ))}
+              {pickerType === 'discarder' &&
+                members.map((member) => (
+                  <Picker.Item key={member.id} label={member.name} value={member.name} />
+                ))}
+              {pickerType === 'winnerPoints' &&
+                availablePoints.map((point, index) => (
+                  <Picker.Item key={index} label={point.toString()} value={point.toString()} />
+                ))}
+              {pickerType === 'dora' &&
+                Array.from({ length: 21 }, (_, i) => i.toString()).map((num) => (
+                  <Picker.Item key={num} label={num} value={num} />
+                ))}
+              {pickerType === 'uraDora' &&
+                Array.from({ length: 21 }, (_, i) => i.toString()).map((num) => (
+                  <Picker.Item key={num} label={num} value={num} />
+                ))}
+            </Picker>
+            <Button title="閉じる" onPress={() => setModalVisible(false)} />
           </View>
         </View>
       </Modal>
@@ -611,54 +688,6 @@ const styles = StyleSheet.create({
   innerContainer: {
     padding: 16,
   },
-  breadcrumbSection: {
-    marginTop: 16,
-    marginBottom: 1,
-  },
-  breadcrumbIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  indicatorCircle: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#ccc',
-  },
-  indicatorCurrent: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#000',
-  },
-  indicatorLine: {
-    width: 50,
-    height: 2,
-    backgroundColor: '#ccc',
-  },
-  breadcrumbContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
-  breadcrumbText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  breadcrumbCurrent: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -667,20 +696,15 @@ const styles = StyleSheet.create({
   rolesContainer: {
     marginVertical: 8,
   },
-  roleButton: {
-    marginVertical: 4,
-    padding: 8,
-    borderColor: '#000',
+  input: {
+    height: 40,
+    borderColor: 'gray',
     borderWidth: 1,
-    borderRadius: 4,
-  },
-  selectedRoleButton: {
-    backgroundColor: '#007bff',
-    borderColor: '#007bff',
-  },
-  unselectedRoleButton: {
+    width: '200%',
+    paddingLeft: 10,
     backgroundColor: '#fff',
-    borderColor: '#000',
+    borderRadius: 4,
+    justifyContent: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -691,35 +715,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  pickerContainer: {
     backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    maxHeight: '50%',
   },
-  modalTitle: {
-    fontSize: 24,
-    marginBottom: 16,
-  },
-  modalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 16,
+  roundTextInline: {
+    fontSize: 16,
+    marginLeft: 8,
   },
   discarderLabel: {
     fontSize: 16,
     marginBottom: 8,
     marginTop: 16,
-  },
-  pickerContainer: {
-    borderWidth: 0.5,
-    borderColor: '#000',
-    borderRadius: 4,
-  },
-  picker: {
-    height: 50,
-    width: 150,
-  },
-  roundPicker: {
-    width: '120%',
   },
   roundContainer: {
     flexDirection: 'row',
@@ -728,27 +740,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     alignItems: 'center',
     marginHorizontal: 0,
-  },
-  roundRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  roundTextInline: {
-    fontSize: 16,
-    marginLeft: 0,
-  },
-  roundPickerContainer: {
-    alignItems: 'center',
-    marginHorizontal: 10,
-    borderWidth: 0.5,
-    borderColor: '#000',
-    borderRadius: 4,
-    width: 90,
-    overflow: 'hidden',
-  },
-  pickerRoundItem: {
-    fontSize: 10,
-    height: 50,
   },
 });
 
