@@ -15,9 +15,10 @@ const GameDetailsScreen: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '半壮詳細',
-      headerTitleAlign: 'center', 
+      headerTitleAlign: 'center',
     });
   }, [navigation]);
+
 
   useEffect(() => {
     const fetchHanchanDetails = async () => {
@@ -31,15 +32,16 @@ const GameDetailsScreen: React.FC = () => {
           return;
         }
 
-        const rounds = await Promise.all(
-          roundsSnapshot.docs.map(async (roundDoc) => {
-            const round = roundDoc.data();
-            const winnerName = round.winner ? (await getDoc(doc(db, `members/${round.winner}`))).data()?.name : '流局';
-            const discarderName = round.discarder ? (await getDoc(doc(db, `members/${round.discarder}`))).data()?.name : 'つも';
-            console.log("あがった人:", winnerName);
-            return { ...round, winnerName, discarderName };
-          })
-        );
+        const rounds = roundsSnapshot.docs.map((roundDoc) => {
+          const round = roundDoc.data();
+          const winnerName = round.winner || '流局';  // `winner` が存在すればそのまま使用、なければ "流局" と表示
+          const discarderName = round.discarder || 'ツモ';  // `discarder` が存在すればそのまま使用、なければ "ツモ" と表示
+          const winnerPoints = round.winnerPoints ? `打点: ${round.winnerPoints}` : '';  // `winnerPoints` が存在すれば表示
+          console.log("あがった人:", winnerName);
+          console.log("打点:", winnerPoints);
+          return { ...round, winnerName, discarderName, winnerPoints };
+        });
+
         // Sort rounds
         const sortedRounds = rounds.sort((a, b) => {
           const placeOrder = { '東': 1, '南': 2, '西': 3, '北': 4 };
@@ -52,13 +54,12 @@ const GameDetailsScreen: React.FC = () => {
           return a.roundNumber.honba - b.roundNumber.honba;
         });
 
-        setHanchanDetails([{ ...hanchan, rounds }]);
+        setHanchanDetails([{ ...hanchan, rounds: sortedRounds }]);
       } catch (error) {
         console.error('Error fetching hanchan details:', error);
       }
     };
-
-    fetchHanchanDetails();
+        fetchHanchanDetails();
   }, [hanchan]);
 
   if (!hanchanDetails.length) {
@@ -80,7 +81,7 @@ const GameDetailsScreen: React.FC = () => {
         </View>
         {hanchanDetails.map((hanchanDetail, index) => (
           <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
-            <Text style={styles.hanchanText}>Hanchan: {hanchanDetail.id}</Text>
+            {/* <Text style={styles.hanchanText}>Hanchan: {hanchanDetail.id}</Text> */}
             {hanchanDetail.rounds && hanchanDetail.rounds.map((round, idx) => (
               <View key={`${round.roundSeq}-${idx}`} style={styles.roundContainer}>
                 <View style={styles.roundBox}>
@@ -89,8 +90,15 @@ const GameDetailsScreen: React.FC = () => {
                     {round.roundNumber.round}局
                     {round.roundNumber.honba}本場
                   </Text>
-                  <Text style={styles.roundText}>あがった人: {round.winnerName}</Text>
-                  <Text style={styles.roundText}>放銃したひと: {round.discarderName}</Text>
+                  {round.isRyuukyoku ? (
+                    <Text style={styles.roundText}>流局</Text>
+                  ) : (
+                    <>
+                      <Text style={styles.winnerNameText}>あがった人: {round.winnerName}</Text>
+                      <Text style={styles.discarderNameText}>放銃したひと: {round.discarderName}</Text>
+                      <Text style={styles.winnerPoints}>打点: {round.winnerPoints}</Text>
+                    </>
+                  )}
                 </View>
               </View>
             ))}
@@ -146,7 +154,7 @@ const styles = StyleSheet.create({
   roundContainer: {
     marginBottom: 16,
     padding: 16,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#E0E0E0',
     borderRadius: 8,
   },
   roundBox: {
@@ -158,7 +166,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   roundText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  winnerNameText: {
     fontSize: 14,
+    fontWeight: 'bold',
+    marginVertical: 5,
+    color: 'blue'
+  },
+  winnerPoints: {
+    fontSize: 14,
+    // fontWeight: 'bold',
+    marginVertical: 5,
+    // color: 'blue'
+  },
+  discarderNameText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginVertical: 5,
+    color: 'red'
   },
 });
 
