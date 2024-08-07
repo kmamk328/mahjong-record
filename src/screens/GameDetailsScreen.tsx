@@ -15,10 +15,9 @@ const GameDetailsScreen: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '半壮詳細',
-      headerTitleAlign: 'center',
+      headerTitleAlign: 'center', 
     });
   }, [navigation]);
-
 
   useEffect(() => {
     const fetchHanchanDetails = async () => {
@@ -59,8 +58,16 @@ const GameDetailsScreen: React.FC = () => {
         console.error('Error fetching hanchan details:', error);
       }
     };
-        fetchHanchanDetails();
+
+    fetchHanchanDetails();
   }, [hanchan]);
+
+  const handleRoundPress = (round) => {
+    navigation.navigate('ScoreInput', {
+      gameId: hanchan.gameId,
+      round: round
+    });
+  };
 
   if (!hanchanDetails.length) {
     return (
@@ -81,9 +88,8 @@ const GameDetailsScreen: React.FC = () => {
         </View>
         {hanchanDetails.map((hanchanDetail, index) => (
           <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
-            {/* <Text style={styles.hanchanText}>Hanchan: {hanchanDetail.id}</Text> */}
             {hanchanDetail.rounds && hanchanDetail.rounds.map((round, idx) => (
-              <View key={`${round.roundSeq}-${idx}`} style={styles.roundContainer}>
+              <TouchableOpacity key={`${round.roundSeq}-${idx}`} style={styles.roundContainer} onPress={() => handleRoundPress(round)}>
                 <View style={styles.roundBox}>
                   <Text style={styles.roundText}>
                     {round.roundNumber.place}場
@@ -96,11 +102,11 @@ const GameDetailsScreen: React.FC = () => {
                     <>
                       <Text style={styles.winnerNameText}>あがった人: {round.winnerName}</Text>
                       <Text style={styles.discarderNameText}>放銃したひと: {round.discarderName}</Text>
-                      <Text style={styles.winnerPoints}>打点: {round.winnerPoints}</Text>
+                      <Text style={styles.winnerPoints}>{round.winnerPoints}</Text>
                     </>
                   )}
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         ))}
@@ -160,11 +166,6 @@ const styles = StyleSheet.create({
   roundBox: {
     marginBottom: 8,
   },
-  hanchanText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
   roundText: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -177,9 +178,7 @@ const styles = StyleSheet.create({
   },
   winnerPoints: {
     fontSize: 14,
-    // fontWeight: 'bold',
     marginVertical: 5,
-    // color: 'blue'
   },
   discarderNameText: {
     fontSize: 14,
