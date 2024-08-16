@@ -2,14 +2,13 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore'; // 必要な関数をインポート
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
 const DashboardScreen = () => {
     const navigation = useNavigation();
     const [yourStats, setYourStats] = useState([]);
-    const [selectedMember, setSelectedMember] = useState(''); // 選択されたメンバーのIDを保存
-    const [selectedMemberName, setSelectedMemberName] = useState(''); // 選択されたメンバーの名前を保存
+    const [selectedMember, setSelectedMember] = useState(''); // 選択されたメンバーの名前を保存
     const [members, setMembers] = useState([]); // 全メンバーを保存
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -48,13 +47,13 @@ const DashboardScreen = () => {
         const fetchData = async () => {
             if (!selectedMember) {
                 console.log('No member selected');
+                setYourStats([]);
                 return;
             }
     
             try {
                 console.log('Fetching games for member:', selectedMember);
-
-                // メンバー名でクエリを実行するか、メンバーIDで実行するか、適切な方法を選択する
+    
                 const gamesQuery = query(
                     collection(db, 'games'),
                     where('members', 'array-contains', selectedMember),
@@ -66,6 +65,7 @@ const DashboardScreen = () => {
     
                 if (gamesSnapshot.empty) {
                     console.log('No games found');
+                    setYourStats([]);
                     return;
                 }
     
@@ -75,8 +75,6 @@ const DashboardScreen = () => {
                     console.log('Processing game:', gameDoc.id);
                     const hanchanCollection = collection(db, 'games', gameDoc.id, 'hanchan');
                     const hanchanSnapshot = await getDocs(hanchanCollection);
-    
-                    const createdAt = gameDoc.data().createdAt?.toDate();
     
                     for (const hanchanDoc of hanchanSnapshot.docs) {
                         console.log('Processing hanchan:', hanchanDoc.id);
@@ -99,7 +97,7 @@ const DashboardScreen = () => {
                             const round = roundDoc.data();
                             console.log(`Processing round ${round.roundNumber?.place} ${round.roundNumber?.round}局`);
                             
-                            if (round.winner === selectedMemberName) { // 名前で一致を確認
+                            if (round.winner === selectedMember) {
                                 winCount += 1;
                                 if (round.reach) reachWinCount += 1;
                                 if (round.naki) nakiWinCount += 1;
@@ -113,7 +111,7 @@ const DashboardScreen = () => {
                                     }
                                 });
                             }
-                            if (round.discarder === selectedMemberName) { // 名前で一致を確認
+                            if (round.discarder === selectedMember) {
                                 discardCount += 1;
                             }
                         });
@@ -121,7 +119,6 @@ const DashboardScreen = () => {
                         allStats.push({
                             gameId: gameDoc.id,
                             hanchanId: hanchanDoc.id,
-                            createdAt, // createdAt を追加
                             winCount,
                             discardCount,
                             reachWinCount,
@@ -140,14 +137,12 @@ const DashboardScreen = () => {
         };
     
         fetchData();
-    }, [selectedMemberName]); // selectedMemberName でトリガー
-
+    }, [selectedMember]);
+            
     const handlePickerSelect = (value) => {
-        setSelectedMember(value); // メンバーのIDをセット
-        const selectedName = members.find(member => member.id === value)?.name;
-        setSelectedMemberName(selectedName || ''); // メンバーの名前をセット
+        setSelectedMember(value);
         setModalVisible(false); // モーダルを閉じる
-        console.log('Selected Member:', selectedName); // 選択されたメンバーの名前をログに表示
+        console.log('Selected Member:', members.find(member => member.id === value)?.name); // 選択されたメンバーをログに表示
     };
 
     return (
@@ -159,42 +154,50 @@ const DashboardScreen = () => {
                         onPress={() => setModalVisible(true)}
                     >
                         <Text style={styles.pickerButtonText}>
-                            {selectedMemberName || 'メンバーを選択'}
+                            {selectedMember ? members.find(member => member.id === selectedMember)?.name : 'メンバーを選択してください'}
                         </Text>
                     </TouchableOpacity>
                 </View>
                 <View style={styles.summaryContainer}>
-                    {yourStats.map((stats, index) => (
-                        <View key={index} style={styles.summaryBox}>
-                            <Text style={styles.summaryText}>
-                                Game ID: {stats.gameId}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                作成日: {stats.createdAt?.toLocaleDateString()}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                あがり回数: {stats.winCount}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                放銃回数: {stats.discardCount}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                リーチあがり回数: {stats.reachWinCount}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                鳴きあがり回数: {stats.nakiWinCount}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                最高打点: {stats.maxWinPoints}
-                            </Text>
-                            <Text style={styles.summaryText}>
-                                役の集計:
-                            </Text>
-                            {Object.entries(stats.roles).map(([role, count]) => (
-                                <Text key={role} style={styles.summaryValue}>{role}: {count} 回</Text>
-                            ))}
+                    {yourStats.length > 0 ? (
+                        yourStats.map((stats, index) => (
+                            <View key={index} style={styles.summaryBox}>
+                                <Text style={styles.summaryText}>
+                                    Game ID: {stats.gameId}
+                                </Text>
+                                <Text style={styles.summaryText}>
+                                    あがり回数: {stats.winCount}
+                                </Text>
+                                <Text style={styles.summaryText}>
+                                    放銃回数: {stats.discardCount}
+                                </Text>
+                                <Text style={styles.summaryText}>
+                                    リーチあがり回数: {stats.reachWinCount}
+                                </Text>
+                                <Text style={styles.summaryText}>
+                                    鳴きあがり回数: {stats.nakiWinCount}
+                                </Text>
+                                <Text style={styles.summaryText}>
+                                    最高打点: {stats.maxWinPoints}
+                                </Text>
+                                <Text style={styles.summaryText}>
+                                    役の集計:
+                                </Text>
+                                {Object.entries(stats.roles).map(([role, count]) => (
+                                    <Text key={role} style={styles.summaryValue}>{role}: {count} 回</Text>
+                                ))}
+                            </View>
+                        ))
+                    ) : (
+                        <View style={styles.summaryBox}>
+                            <Text style={styles.summaryText}>あがり回数: 0</Text>
+                            <Text style={styles.summaryText}>放銃回数: 0</Text>
+                            <Text style={styles.summaryText}>リーチあがり回数: 0</Text>
+                            <Text style={styles.summaryText}>鳴きあがり回数: 0</Text>
+                            <Text style={styles.summaryText}>最高打点: 0</Text>
+                            <Text style={styles.summaryText}>役の集計: なし</Text>
                         </View>
-                    ))}
+                    )}
                 </View>
             </ScrollView>
             <Modal
@@ -253,7 +256,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     pickerButtonText: {
-        fontSize: 18,
+        fontSize: 16,
         color: 'black',
         textAlign: 'center',
     },
