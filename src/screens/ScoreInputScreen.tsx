@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { FAB } from 'react-native-paper'; // Floating Action Button
 
 type RootStackParamList = {
   ScoreInput: { gameId: string };
@@ -104,6 +105,13 @@ const ScoreInputScreen = () => {
       headerTintColor: '#000',
       headerTitle: 'スコア入力',
       headerTitleAlign: 'center',
+      headerRight: () => (
+        <Button
+          onPress={handleFinish}
+          title="終了"
+          color="#000"
+        />
+      ),
     });
   }, [navigation]);
 
@@ -301,7 +309,7 @@ const ScoreInputScreen = () => {
       ];
     } else {
       points = [
-        1300, 1600, 2000, 2300, 2600, 2900, 3200, 3600, 3900, 4500, 5200,
+        1000, 1300, 1600, 2000, 2300, 2600, 2900, 3200, 3600, 3900, 4500, 5200,
         5800, 6400, 7100, 7700, 8000, 12000, 16000, 24000, 32000, 64000
       ];
     }
@@ -494,25 +502,26 @@ const ScoreInputScreen = () => {
   };
 
   return (
+    <View style={styles.container}>
     <ScrollView style={styles.container}>
       <View style={styles.innerContainer}>
         <View style={styles.roundContainer}>
           <TouchableOpacity onPress={() => openPicker('place')}>
-            <View style={styles.input}>
+            <View style={styles.inputRound}>
               <Text>{currentRound.roundNumber.place}</Text>
             </View>
           </TouchableOpacity>
           <Text style={styles.roundTextInline}> 場 </Text>
 
           <TouchableOpacity onPress={() => openPicker('round')}>
-            <View style={styles.input}>
+            <View style={styles.inputRound}>
               <Text>{currentRound.roundNumber.round}</Text>
             </View>
           </TouchableOpacity>
           <Text style={styles.roundTextInline}> 局 </Text>
 
           <TouchableOpacity onPress={() => openPicker('honba')}>
-            <View style={styles.input}>
+            <View style={styles.inputRound}>
               <Text>{currentRound.roundNumber.honba}</Text>
             </View>
           </TouchableOpacity>
@@ -529,6 +538,7 @@ const ScoreInputScreen = () => {
             }
           />
         </View>
+        <View style={styles.divider} />
 
         {currentRound.isRyuukyoku ? (
           <View>
@@ -595,6 +605,8 @@ const ScoreInputScreen = () => {
               </TouchableOpacity>
             </View>
 
+            <View style={styles.divider} />
+
             {!currentRound.isTsumo && (
               <View>
                 <Text style={styles.discarderLabel}>放銃したひと:</Text>
@@ -610,12 +622,9 @@ const ScoreInputScreen = () => {
           </>
         )}
 
-        <View style={styles.buttonContainer}>
-          <Button title="前へ" onPress={() => console.log('前へ')} />
-          <Button title="終了" onPress={handleFinish} />
-          <Button title="次へ" onPress={confirmSave} />
-        </View>
+          
       </View>
+      
 
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
@@ -678,6 +687,12 @@ const ScoreInputScreen = () => {
         </View>
       </Modal>
     </ScrollView>
+    <FAB
+      style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
+      small icon="chevron-right"
+      onPress={confirmSave}
+    />
+    </View>
   );
 };
 
@@ -697,6 +712,16 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    width: '100%',
+    paddingLeft: 10,
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    justifyContent: 'center',
+  },
+  inputRound: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
@@ -741,6 +766,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 0,
   },
+  divider: {
+    height: 1,
+    backgroundColor: 'gray',
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+},
 });
 
 export default ScoreInputScreen;

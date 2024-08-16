@@ -44,7 +44,7 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, lab
         <TouchableOpacity onPress={showPicker}>
           <View style={styles.input}>
             <Text>{value || placeholder}</Text>
-            <Ionicons name="md-arrow-down" size={24} color="gray" style={styles.iconContainer} />
+            <Ionicons name="arrow-down" size={24} color="gray" style={styles.iconContainer} />
           </View>
         </TouchableOpacity>
       )}

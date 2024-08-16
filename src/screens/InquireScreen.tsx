@@ -138,7 +138,11 @@ const InquireScreen = () => {
                     )}
                 </View>
             </ScrollView>
-            <FAB style={styles.fab} small icon="plus" onPress={handleAddGame} />
+            <FAB
+                style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
+                small icon="plus"
+                onPress={handleAddGame}
+            />
         </View>
     );
 };
