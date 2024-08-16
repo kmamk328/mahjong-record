@@ -2,6 +2,19 @@ export type RootStackParamList = {
   Inquire: undefined;
   HanchanList: { gameId: string };
   GameDetails: { hanchan: Hanchan };
+  ScoreInput: {
+    gameId: string;
+    hanchanId: string;
+    round: {
+      id: string;
+      roundNumber: { place: string; round: string; honba: string };
+      winner: string;
+      discarder: string;
+      winnerPoints: string;
+      isRyuukyoku: boolean;
+      createdAt: Date;
+    };
+  };
 };
 
 export interface Game {

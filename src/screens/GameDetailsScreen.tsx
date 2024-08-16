@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
-import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useRoute, RouteProp, useNavigation, NavigationProp } from '@react-navigation/native';
+import { getFirestore, collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
 import { RootStackParamList } from '../navigationTypes';
+import { FAB } from 'react-native-paper';
 
 type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
 
 const GameDetailsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<GameDetailsScreenRouteProp>();
   const { hanchan } = route.params;
   const [hanchanDetails, setHanchanDetails] = useState<any[]>([]);
@@ -15,7 +17,7 @@ const GameDetailsScreen: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '半壮詳細',
-      headerTitleAlign: 'center', 
+      headerTitleAlign: 'center',
     });
   }, [navigation]);
 
@@ -62,12 +64,48 @@ const GameDetailsScreen: React.FC = () => {
     fetchHanchanDetails();
   }, [hanchan]);
 
-  const handleRoundPress = (round) => {
+  const handleAddRound = async () => {
+    try {
+        const db = getFirestore();
+        const hanchanRef = doc(db, 'games', hanchan.gameId, 'hanchan', hanchan.id);
+        const roundsCollection = collection(hanchanRef, 'rounds');
+        
+        // 新しいラウンド情報の作成（初期値）
+        const newRound = {
+            roundNumber: { place: '東', round: '1', honba: '0' },
+            winner: '',
+            discarder: '',
+            winnerPoints: '',
+            isRyuukyoku: false,
+            createdAt: new Date(),
+        };
+
+        // Firestore に新しいラウンドを追加
+        const newRoundRef = await addDoc(roundsCollection, newRound);
+        
+        // 追加された新しいラウンドの ID を取得
+        const newRoundId = newRoundRef.id;
+
+        // 新しいラウンドの編集画面へ遷移
+        navigation.navigate('ScoreInput', {
+            gameId: hanchan.gameId,
+            hanchanId: hanchan.id,  // hanchanIdを渡す
+            round: { id: newRoundId, ...newRound }, // 作成された新しいラウンド情報を渡す
+        });
+        console.log("gameId: ", hanchan.gameId);
+        console.log("hanchanId: ", hanchan.id);
+    } catch (error) {
+        console.error("Error adding new round: ", error);
+    }
+};
+
+const handleRoundPress = (round) => {
     navigation.navigate('ScoreInput', {
-      gameId: hanchan.gameId,
-      round: round
+        gameId: hanchan.gameId,
+        hanchanId: hanchan.id,  // hanchanIdを渡す
+        round: round // 既存のラウンド情報を渡す
     });
-  };
+};
 
   if (!hanchanDetails.length) {
     return (
@@ -78,6 +116,7 @@ const GameDetailsScreen: React.FC = () => {
   }
 
   return (
+    <View style={styles.container}>
     <ScrollView style={styles.container}>
       <View style={styles.gameBox}>
         <Text style={styles.dateText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
@@ -112,6 +151,13 @@ const GameDetailsScreen: React.FC = () => {
         ))}
       </View>
     </ScrollView>
+      <FAB
+      style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
+      small
+      icon="plus"
+      onPress={handleAddRound}
+    />
+  </View>
   );
 };
 
@@ -160,7 +206,7 @@ const styles = StyleSheet.create({
   roundContainer: {
     marginBottom: 16,
     padding: 16,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#f5f5f5',
     borderRadius: 8,
   },
   roundBox: {
@@ -185,6 +231,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginVertical: 5,
     color: 'red'
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
   },
 });
 

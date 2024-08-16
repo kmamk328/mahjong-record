@@ -70,6 +70,7 @@ const HanchanListScreen = ({ route }) => {
   };
 
   return (
+    <View style={styles.container}>
     <ScrollView style={styles.container} scrollEventThrottle={400}>
       <View style={styles.gameBox}>
         <Text style={styles.dateText}>{createdAt}</Text>
@@ -96,9 +97,15 @@ const HanchanListScreen = ({ route }) => {
             </TouchableOpacity>
           ))
         )}
-        <FAB style={styles.fab} small icon="plus" onPress={handleAddRound} />
+        
       </View>
     </ScrollView>
+    <FAB
+      style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
+      small icon="plus"
+      onPress={handleAddRound}
+    />
+    </View>
   );
 };
 
