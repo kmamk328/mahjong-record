@@ -52,7 +52,9 @@ const ScoreInputScreen = () => {
   const [filteredPoints, setFilteredPoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const navigation = useNavigation();
   const route = useRoute();
-  const { gameId } = route.params;
+  // const { gameId } = route.params;
+  // const { gameId, roundId, roundData } = route.params; // roundIdを受け取る
+  const { gameId, hanchanId, roundId, roundData } = route.params;
   const [rolesOptions, setRolesOptions] = useState([
     { role: 'リーチ', points: 1 },
     { role: '一発(イッパツ)', points: 1 },
@@ -94,7 +96,7 @@ const ScoreInputScreen = () => {
   const [previousRoundInfo, setPreviousRoundInfo] = useState('開局');
   const [previousRound, setPreviousRound] = useState(null);
   const [nextRound, setNextRound] = useState(null);
-  const [hanchanId, setHanchanId] = useState(null);
+  // const [hanchanId, setHanchanId] = useState(null);
 
 
   useLayoutEffect(() => {
@@ -148,6 +150,19 @@ const ScoreInputScreen = () => {
     fetchMembers();
     fetchHanchan();
   }, [gameId]);
+
+  // useEffect(() => {
+  //   // もしround情報がルートから渡されている場合は、currentRoundにセット
+  //   if (round) {
+  //     setCurrentRound(round);
+  //   }
+  // }, [round]);
+  useEffect(() => {
+    // もしround情報がルートから渡されている場合は、currentRoundにセット
+    if (roundId) {
+      setCurrentRound(roundId);
+    }
+  }, [roundId]);
 
   const handlePickerChange = (value) => {
     setModalVisible(false);
@@ -316,26 +331,62 @@ const ScoreInputScreen = () => {
     setAvailablePoints(points);
   };
 
+  useEffect(() => {
+    if (roundData) {
+        setCurrentRound({
+            discarder: roundData.discarder || '',
+            discarderPoints: roundData.discarderPoints || '',
+            isNaki: roundData.isNaki || false,
+            isReach: roundData.isReach || false,
+            isRyuukyoku: roundData.isRyuukyoku || false,
+            roundNumber: roundData.roundNumber || { round: '1', place: '東', honba: '0' },
+            winner: roundData.winner || '',
+            winnerPoints: roundData.winnerPoints || '',
+            isTsumo: roundData.isTsumo || false,
+            isOya: roundData.isOya || false,
+            roles: roundData.roles || [],
+            dora: roundData.dora || 0,
+            uraDora: roundData.uraDora || 0,
+            roundSeq: roundData.roundSeq || 0,
+        });
+    }
+}, [roundData]);
+
   const handleNext = async () => {
     try {
-      const roundsRef = collection(db, 'games', gameId, 'hanchan', hanchanId, 'rounds');
-      await addDoc(roundsRef, {
-        ...currentRound,
-        isTsumo: currentRound.isTsumo,
-        isNaki: currentRound.isNaki,
-        isReach: currentRound.isReach,
-        isRyuukyoku: currentRound.isRyuukyoku,
-        discarder: currentRound.discarder,
-        discarderPoints: currentRound.discarderPoints,
-        roles: selectedRoles,
-        dora: currentRound.dora,
-        uraDora: currentRound.uraDora,
-        isOya: currentRound.isOya,
-        roundSeq,
-      });
+      console.log("roundId: ", roundId);
+      if (roundId) {
+        // 既存のラウンド情報を更新
+        // const roundRef = doc(roundsRef, roundId);
+        const roundRef = doc(db, 'games', gameId, 'hanchan', hanchanId, 'rounds', roundId);
+        await updateDoc(roundRef, {
+            ...currentRound,
+            roles: selectedRoles,
+            roundSeq,
+        });
+        // Alert.alert('更新完了', 'ラウンドデータが更新されました');
+      } else {
+        const roundsRef = collection(db, 'games', gameId, 'hanchan', hanchanId, 'rounds');
+        // 新規ラウンドを追加
+        await addDoc(roundsRef, {
+          ...currentRound,
+          isTsumo: currentRound.isTsumo,
+          isNaki: currentRound.isNaki,
+          isReach: currentRound.isReach,
+          isRyuukyoku: currentRound.isRyuukyoku,
+          discarder: currentRound.discarder,
+          discarderPoints: currentRound.discarderPoints,
+          roles: selectedRoles,
+          dora: currentRound.dora,
+          uraDora: currentRound.uraDora,
+          isOya: currentRound.isOya,
+          roundSeq,
+        });
+        // Update roundSeq for the next round
+        setRoundSeq(roundSeq + 1);
+      }
 
-      // Update roundSeq for the next round
-      setRoundSeq(roundSeq + 1);
+      
 
       if (currentRound.winner) {
         const winnerRef = doc(db, 'members', currentRound.winner);

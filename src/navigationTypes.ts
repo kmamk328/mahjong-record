@@ -5,15 +5,16 @@ export type RootStackParamList = {
   ScoreInput: {
     gameId: string;
     hanchanId: string;
-    round: {
-      id: string;
-      roundNumber: { place: string; round: string; honba: string };
-      winner: string;
-      discarder: string;
-      winnerPoints: string;
-      isRyuukyoku: boolean;
-      createdAt: Date;
-    };
+    round: Round; // ここで修正
+    // round: {
+    //   id: string;
+    //   roundNumber: { place: string; round: string; honba: string };
+    //   winner: string;
+    //   discarder: string;
+    //   winnerPoints: string;
+    //   isRyuukyoku: boolean;
+    //   createdAt: Date;
+    // };
   };
 };
 
@@ -33,6 +34,7 @@ export interface Hanchan {
 }
 
 export interface Round {
+  id: string;  // ここで修正
   roundSeq: number;
   roundNumber: {
     place: string;
@@ -42,5 +44,8 @@ export interface Round {
   winner: string;
   discarder: string;
   winnerName?: string;
+  winnerPoints: string;
   discarderName?: string;
+  isRyuukyoku: boolean;
+  createdAt: Date;
 }

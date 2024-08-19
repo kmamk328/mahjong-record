@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRoute, RouteProp, useNavigation, NavigationProp } from '@react-navigation/native';
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+
 import { RootStackParamList } from '../navigationTypes';
 import { FAB } from 'react-native-paper';
 
@@ -40,7 +42,7 @@ const GameDetailsScreen: React.FC = () => {
           const winnerPoints = round.winnerPoints ? `打点: ${round.winnerPoints}` : '';  // `winnerPoints` が存在すれば表示
           console.log("あがった人:", winnerName);
           console.log("打点:", winnerPoints);
-          return { ...round, winnerName, discarderName, winnerPoints };
+          return { id: roundDoc.id, ...round, winnerName, discarderName, winnerPoints };
         });
 
         // Sort rounds
@@ -99,13 +101,54 @@ const GameDetailsScreen: React.FC = () => {
     }
 };
 
-const handleRoundPress = (round) => {
+// const handleRoundPress = (round) => {
+//     navigation.navigate('ScoreInput', {
+//         gameId: hanchan.gameId,
+//         hanchanId: hanchan.id,  // hanchanIdを渡す
+//         round: round, // 既存のラウンド情報を渡す
+//     });
+// };
+
+  // const handleRoundPress = (round) => {
+  //   navigation.navigate('ScoreInput', {
+  //       gameId: hanchan.gameId,
+  //       roundId: round.id, // round.idを渡す
+  //       roundData: round   // その他のroundデータも必要に応じて渡す
+  //   });
+  //   console.log("GameDetail round.id: ", round.id);
+  //   console.log("GameDetail round: ", round);
+  // };
+
+  const handleRoundPress = (roundId, roundData) => {
     navigation.navigate('ScoreInput', {
-        gameId: hanchan.gameId,
-        hanchanId: hanchan.id,  // hanchanIdを渡す
-        round: round // 既存のラウンド情報を渡す
+      gameId: hanchan.gameId,
+      hanchanId: hanchan.id,  // hanchanのIDを渡す
+      roundId: roundId,       // roundsのドキュメントIDを渡す
+      roundData: roundData    // roundデータを渡す
     });
-};
+    console.log("GameDetail roundId: ", roundId);
+    console.log("GameDetail roundData: ", roundData);
+  };
+  // const handleRoundPress = (roundId) => {
+  //   console.log("roundId:", roundId);
+  //   const roundDocRef = doc(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds', roundId);
+  //   getDoc(roundDocRef).then((roundDoc) => {
+  //       if (roundDoc.exists()) {
+  //           const roundData = roundDoc.data();
+  //           console.log("Round data:", roundData);
+  //           navigation.navigate('ScoreInput', {
+  //               gameId: hanchan.gameId,
+  //               hanchanId: hanchan.id,
+  //               roundId: roundId,
+  //               roundData: roundData,
+  //           });
+  //       } else {
+  //           console.log("No such document!");
+  //       }
+  //   }).catch((error) => {
+  //       console.error("Error getting document:", error);
+  //   });
+  // };
 
   if (!hanchanDetails.length) {
     return (
@@ -128,7 +171,7 @@ const handleRoundPress = (round) => {
         {hanchanDetails.map((hanchanDetail, index) => (
           <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
             {hanchanDetail.rounds && hanchanDetail.rounds.map((round, idx) => (
-              <TouchableOpacity key={`${round.roundSeq}-${idx}`} style={styles.roundContainer} onPress={() => handleRoundPress(round)}>
+              <TouchableOpacity key={`${round.roundSeq}-${idx}`} style={styles.roundContainer} onPress={() => handleRoundPress(round.id, round)}>
                 <View style={styles.roundBox}>
                   <Text style={styles.roundText}>
                     {round.roundNumber.place}場
