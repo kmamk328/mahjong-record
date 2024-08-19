@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
+import { Image } from 'react-native';
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -119,14 +120,20 @@ const InquireScreen = () => {
                 <View style={styles.innerContainer}>
                     {games.map((game) => (
                         <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
-                            <Text style={styles.getDateText}>{game.createdAt}</Text>
-                            <View style={styles.membersContainer}>
-                                {game.members.map((member, index) => (
-                                    <View key={index} style={styles.member}>
-                                        <Icon name="user" size={20} color="black" />
-                                        <Text style={styles.getStartedText}>{member}</Text>
-                                    </View>
-                                ))}
+                            <Image
+                                source={require('../image/pin_1.png')} // ローカル画像の場合
+                                style={styles.imageStyle}
+                            />
+                            <View style={styles.textContainer}>
+                                <Text style={styles.getDateText}>{game.createdAt}</Text>
+                                <View style={styles.membersContainer}>
+                                    {game.members.map((member, index) => (
+                                        <View key={index} style={styles.member}>
+                                            <Icon name="user" size={20} color="black" />
+                                            <Text style={styles.getStartedText}>{member}</Text>
+                                        </View>
+                                    ))}
+                                </View>
                             </View>
                         </TouchableOpacity>
                     ))}
@@ -180,6 +187,9 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     gameBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
         marginBottom: 16,
         padding: 16,
         backgroundColor: '#fff',
@@ -191,6 +201,7 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     getDateText: {
+        flex: 1,
         fontSize: 17,
         lineHeight: 24,
         textAlign: 'center',
@@ -202,7 +213,8 @@ const styles = StyleSheet.create({
     },
     membersContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        // justifyContent: 'space-around',
+        justifyContent: 'space-between',
         marginTop: 10,
     },
     member: {
@@ -219,6 +231,15 @@ const styles = StyleSheet.create({
         margin: 16,
         right: 0,
         bottom: 0,
+    },
+    imageStyle: {
+        width: 50,              // 画像の幅
+        height: 70,             // 画像の高さ
+        marginRight: 10,        // テキストとの間隔を設定
+    },
+    textContainer: {
+        flex: 1, // 画像の右側に配置されるコンテンツに柔軟な幅を確保
+        justifyContent: 'center', // テキストコンテンツの縦方向の中央揃え
     },
 });
 
