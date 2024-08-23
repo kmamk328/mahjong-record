@@ -75,8 +75,18 @@ const DashboardScreen = () => {
     
                 for (const gameDoc of gamesSnapshot.docs) {
                     const gameId = gameDoc.id;
+                    const gameData = gameDoc.data();
+
+                    // ゲームの日時をフォーマットして取得
+                    const gameDate = gameData.createdAt.toDate().toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+
                     let gameStats = {
                         gameId,
+                        gameDate,
                         winCount: 0,
                         discardCount: 0,
                         reachWinCount: 0,
@@ -152,8 +162,11 @@ const DashboardScreen = () => {
                     {yourStats.length > 0 ? (
                         yourStats.map((stats, index) => (
                             <View key={index} style={styles.summaryBox}>
-                                <Text style={styles.summaryText}>
+                                {/* <Text style={styles.summaryText}>
                                     Game ID: {stats.gameId}
+                                </Text> */}
+                                <Text style={styles.getDateText}>
+                                    {stats.gameDate}
                                 </Text>
                                 <Text style={styles.summaryText}>
                                     あがり回数: {stats.winCount}
@@ -170,9 +183,9 @@ const DashboardScreen = () => {
                                 <Text style={styles.summaryText}>
                                     最高打点: {stats.maxWinPoints}
                                 </Text>
-                                <Text style={styles.summaryText}>
+                                {/* <Text style={styles.summaryText}>
                                     役の集計:
-                                </Text>
+                                </Text> */}
                                 {Object.entries(stats.roles).map(([role, count]) => (
                                     <Text key={role} style={styles.summaryValue}>{role}: {count} 回</Text>
                                 ))}
@@ -274,6 +287,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         marginVertical: 5,
         color: 'blue',
+    },
+    getDateText: {
+        fontSize: 20,
+        lineHeight: 24,
+        marginLeft: 0,     // 必要に応じて余白を調整
+        fontWeight: 'bold',
     },
 });
 
