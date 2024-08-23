@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, doc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, addDoc, deleteDoc} from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import Icon from 'react-native-vector-icons/Feather';
 
 const HanchanListScreen = ({ route }) => {
   const { gameId } = route.params;
@@ -11,6 +13,18 @@ const HanchanListScreen = ({ route }) => {
   const [createdAt, setCreatedAt] = useState(null);
   const [hanchans, setHanchans] = useState([]);
   const navigation = useNavigation();
+
+  const imagePaths = [
+    require('../image/pin_1.png'),
+    require('../image/pin_2.png'),
+    require('../image/pin_3.png'),
+    require('../image/pin_4.png'),
+    require('../image/pin_5.jpg'),
+    require('../image/pin_6.png'),
+    require('../image/pin_7.png'),
+    require('../image/pin_8.png'),
+    require('../image/pin_9.png'),
+];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -29,7 +43,12 @@ const HanchanListScreen = ({ route }) => {
       const gameDoc = await getDoc(gameRef);
       if (gameDoc.exists) {
         const gameData = gameDoc.data();
-        setCreatedAt(gameData.createdAt.toDate().toLocaleString());
+        // 日付をフォーマット
+        setCreatedAt(gameData.createdAt.toDate().toLocaleDateString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }));
 
         const membersList = await Promise.all(
           gameData.members.map(async (memberId) => {
@@ -69,6 +88,15 @@ const HanchanListScreen = ({ route }) => {
     navigation.navigate('GameDetails', { hanchan });
   };
 
+  const onDelete = async (hanchanId) => {
+    try {
+      await deleteDoc(doc(db, 'games', gameId, 'hanchan', hanchanId));
+      setHanchans((prevHanchans) => prevHanchans.filter((hanchan) => hanchan.id !== hanchanId));
+    } catch (error) {
+      console.error('Error deleting hanchan:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
     <ScrollView style={styles.container} scrollEventThrottle={400}>
@@ -87,17 +115,36 @@ const HanchanListScreen = ({ route }) => {
           <Text style={styles.noDataText}>データがありません</Text>
         ) : (
           hanchans.map((hanchan, index) => (
-            <TouchableOpacity
-              key={hanchan.id}
-              style={styles.hanchanContainer}
-              onPress={() => handleHanchanPress(hanchan)}
-            >
-              <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
-              <Text style={styles.hanchanText}>日時: {hanchan.createdAt.toDate().toLocaleString()}</Text>
-            </TouchableOpacity>
+            <Swipeable
+                key={hanchan.id}
+                renderRightActions={() => (
+                  <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(hanchan.id)}>
+                    <Icon name="trash-2" size={24} color="white" />
+                  </TouchableOpacity>
+                )}
+              >
+              <TouchableOpacity
+                key={hanchan.id}
+                style={styles.hanchanContainer}
+                onPress={() => handleHanchanPress(hanchan)}
+              >
+                <Image
+                    source={imagePaths[index % imagePaths.length]} // インデックスに基づいて画像を選択
+                    style={styles.imageStyle}
+                />
+                <View style={styles.textContainer}>
+                    <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
+                    {/* <Text style={styles.hanchanText}>日時: {hanchan.createdAt.toDate().toLocaleDateString('ja-JP', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit'
+                    })}</Text> */}
+                </View>
+              </TouchableOpacity>
+            </Swipeable>
           ))
         )}
-        
+
       </View>
     </ScrollView>
     <FAB
@@ -145,6 +192,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   hanchanContainer: {
+    flexDirection: 'row',
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
@@ -158,6 +206,24 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  imageStyle: {
+    width: 60,              // 画像の幅
+    height: 70,             // 画像の高さ
+    marginRight: 10,        // テキストとの間隔を設定
+  },
+  textContainer: {
+      flex: 1, // 画像の右側に配置されるコンテンツに柔軟な幅を確保
+      justifyContent: 'center', // テキストコンテンツの縦方向の中央揃え
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    justifyContent: 'center', // 垂直方向の中央に配置
+    alignItems: 'center',    // 水平方向の中央に配置
+    width: 70,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignSelf: 'stretch', // 親要素に高さを合わせる
+},
 });
 
 export default HanchanListScreen;

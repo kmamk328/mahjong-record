@@ -2,13 +2,14 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
 const DashboardScreen = () => {
     const navigation = useNavigation();
     const [yourStats, setYourStats] = useState([]);
     const [selectedMember, setSelectedMember] = useState(''); // 選択されたメンバーの名前を保存
+    const [selectedMemberName, setSelectedMemberName] = useState('');
     const [members, setMembers] = useState([]); // 全メンバーを保存
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -33,7 +34,6 @@ const DashboardScreen = () => {
                     id: doc.id,
                     name: doc.data().name,
                 }));
-                console.log('Members fetched:', membersList);
                 setMembers(membersList);
             } catch (error) {
                 console.error('Error fetching members: ', error);
@@ -46,14 +46,17 @@ const DashboardScreen = () => {
     useEffect(() => {
         const fetchData = async () => {
             if (!selectedMember) {
-                console.log('No member selected');
                 setYourStats([]);
                 return;
             }
     
             try {
-                console.log('Fetching games for member:', selectedMember);
-    
+                // 選択されたメンバーの名前を取得する
+                const selectedMemberDoc = await getDoc(doc(db, 'members', selectedMember));
+                const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
+                setSelectedMemberName(memberName);
+
+
                 const gamesQuery = query(
                     collection(db, 'games'),
                     where('members', 'array-contains', selectedMember),
@@ -64,73 +67,61 @@ const DashboardScreen = () => {
                 const gamesSnapshot = await getDocs(gamesQuery);
     
                 if (gamesSnapshot.empty) {
-                    console.log('No games found');
                     setYourStats([]);
                     return;
                 }
     
-                let allStats = [];
+                let aggregatedStats = [];
     
                 for (const gameDoc of gamesSnapshot.docs) {
-                    console.log('Processing game:', gameDoc.id);
-                    const hanchanCollection = collection(db, 'games', gameDoc.id, 'hanchan');
+                    const gameId = gameDoc.id;
+                    let gameStats = {
+                        gameId,
+                        winCount: 0,
+                        discardCount: 0,
+                        reachWinCount: 0,
+                        nakiWinCount: 0,
+                        maxWinPoints: 0,
+                        roles: {}
+                    };
+    
+                    const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
                     const hanchanSnapshot = await getDocs(hanchanCollection);
     
                     for (const hanchanDoc of hanchanSnapshot.docs) {
-                        console.log('Processing hanchan:', hanchanDoc.id);
-                        const roundsCollection = collection(db, 'games', gameDoc.id, 'hanchan', hanchanDoc.id, 'rounds');
+                        const roundsCollection = collection(db, 'games', gameId, 'hanchan', hanchanDoc.id, 'rounds');
                         const roundsSnapshot = await getDocs(roundsCollection);
     
-                        if (roundsSnapshot.empty) {
-                            console.log(`No rounds data in hanchan: ${hanchanDoc.id}`);
-                            continue;
-                        }
-    
-                        let winCount = 0;
-                        let discardCount = 0;
-                        let reachWinCount = 0;
-                        let nakiWinCount = 0;
-                        let maxWinPoints = 0;
-                        let roles = {};
+                        if (roundsSnapshot.empty) continue;
     
                         roundsSnapshot.forEach((roundDoc) => {
                             const round = roundDoc.data();
-                            console.log(`Processing round ${round.roundNumber?.place} ${round.roundNumber?.round}局`);
-                            
-                            if (round.winner === selectedMember) {
-                                winCount += 1;
-                                if (round.reach) reachWinCount += 1;
-                                if (round.naki) nakiWinCount += 1;
-                                if (round.winnerPoints > maxWinPoints) maxWinPoints = round.winnerPoints;
+                            console.log("round.winner: ", round.winner);
+                            console.log("selectedMemberName: ", selectedMemberName);
+                            if (round.winner === selectedMemberName) {
+                                gameStats.winCount += 1;
+                                if (round.reach) gameStats.reachWinCount += 1;
+                                if (round.naki) gameStats.nakiWinCount += 1;
+                                if (round.winnerPoints > gameStats.maxWinPoints) gameStats.maxWinPoints = round.winnerPoints;
     
-                                round.selectedRoles?.forEach((role: string) => {
-                                    if (roles[role]) {
-                                        roles[role] += 1;
+                                round.selectedRoles?.forEach((role) => {
+                                    if (gameStats.roles[role]) {
+                                        gameStats.roles[role] += 1;
                                     } else {
-                                        roles[role] = 1;
+                                        gameStats.roles[role] = 1;
                                     }
                                 });
                             }
                             if (round.discarder === selectedMember) {
-                                discardCount += 1;
+                                gameStats.discardCount += 1;
                             }
                         });
-    
-                        allStats.push({
-                            gameId: gameDoc.id,
-                            hanchanId: hanchanDoc.id,
-                            winCount,
-                            discardCount,
-                            reachWinCount,
-                            nakiWinCount,
-                            maxWinPoints,
-                            roles,
-                        });
                     }
+    
+                    aggregatedStats.push(gameStats);
                 }
     
-                console.log('Selected Member Stats:', allStats);
-                setYourStats(allStats);
+                setYourStats(aggregatedStats);
             } catch (error) {
                 console.error('Error fetching games:', error);
             }
@@ -142,7 +133,6 @@ const DashboardScreen = () => {
     const handlePickerSelect = (value) => {
         setSelectedMember(value);
         setModalVisible(false); // モーダルを閉じる
-        console.log('Selected Member:', members.find(member => member.id === value)?.name); // 選択されたメンバーをログに表示
     };
 
     return (

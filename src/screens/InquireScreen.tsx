@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
 import { Image } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -14,6 +15,18 @@ const InquireScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [lastVisible, setLastVisible] = useState(null);
     const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+    const imagePaths = [
+        require('../image/pin_1.png'),
+        require('../image/pin_2.png'),
+        require('../image/pin_3.png'),
+        require('../image/pin_4.png'),
+        require('../image/pin_5.jpg'),
+        require('../image/pin_6.png'),
+        require('../image/pin_7.png'),
+        require('../image/pin_8.png'),
+        require('../image/pin_9.png'),
+    ];
 
     const fetchData = async (loadMore = false) => {
         try {
@@ -35,9 +48,13 @@ const InquireScreen = () => {
                 const hanchanSnapshot = await getDocs(hanchanQuery);
                 const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => ({ id: hanchanDoc.id, ...hanchanDoc.data(), gameId: gameDoc.id }));
 
+                // 日付をフォーマット
+                const createdAtDate = gameData.createdAt.toDate();
+                const formattedDate = `${createdAtDate.getFullYear()}/${String(createdAtDate.getMonth() + 1).padStart(2, '0')}/${String(createdAtDate.getDate()).padStart(2, '0')}`;
+
                 gamesList.push({
                     id: gameDoc.id,
-                    createdAt: gameData.createdAt.toDate().toLocaleString(),
+                    createdAt: formattedDate,
                     members: membersNames,
                     hanchan: hanchanList,
                 });
@@ -96,6 +113,32 @@ const InquireScreen = () => {
         navigation.navigate('MemberInput');
     };
 
+    const onDelete = async (gameId) => {
+        Alert.alert(
+            '確認',
+            '本当にこのゲームを削除しますか？',
+            [
+                {
+                    text: 'キャンセル',
+                    style: 'cancel',
+                },
+                {
+                    text: '削除',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await deleteDoc(doc(db, 'games', gameId));
+                            setGames((prevGames) => prevGames.filter((game) => game.id !== gameId));
+                        } catch (error) {
+                            console.error('Error deleting game:', error);
+                        }
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
@@ -118,10 +161,18 @@ const InquireScreen = () => {
                 scrollEventThrottle={400}
             >
                 <View style={styles.innerContainer}>
-                    {games.map((game) => (
+                    {games.map((game, index) => (
+                        <Swipeable
+                            key={game.id}
+                            renderRightActions={() => (
+                                <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(game.id)}>
+                                    <Icon name="trash-2" size={24} color="white" />
+                                </TouchableOpacity>
+                            )}
+                        >
                         <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
                             <Image
-                                source={require('../image/pin_1.png')} // ローカル画像の場合
+                                source={imagePaths[index % imagePaths.length]} // インデックスに基づいて画像を選択
                                 style={styles.imageStyle}
                             />
                             <View style={styles.textContainer}>
@@ -129,13 +180,14 @@ const InquireScreen = () => {
                                 <View style={styles.membersContainer}>
                                     {game.members.map((member, index) => (
                                         <View key={index} style={styles.member}>
-                                            <Icon name="user" size={20} color="black" />
+                                            <Icon name="user" size={20} color="gray" />
                                             <Text style={styles.getStartedText}>{member}</Text>
                                         </View>
                                     ))}
                                 </View>
                             </View>
                         </TouchableOpacity>
+                        </Swipeable>
                     ))}
                     {isFetchingMore && (
                         <View style={styles.loadingMoreContainer}>
@@ -201,10 +253,11 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     getDateText: {
-        flex: 1,
         fontSize: 17,
         lineHeight: 24,
-        textAlign: 'center',
+        textAlign: 'left', // 配置する位置
+        marginLeft: 0,     // 必要に応じて余白を調整
+        fontWeight: 'bold',
     },
     getStartedText: {
         fontSize: 17,
@@ -233,13 +286,22 @@ const styles = StyleSheet.create({
         bottom: 0,
     },
     imageStyle: {
-        width: 50,              // 画像の幅
+        width: 60,              // 画像の幅
         height: 70,             // 画像の高さ
         marginRight: 10,        // テキストとの間隔を設定
     },
     textContainer: {
         flex: 1, // 画像の右側に配置されるコンテンツに柔軟な幅を確保
         justifyContent: 'center', // テキストコンテンツの縦方向の中央揃え
+    },
+    deleteButton: {
+        backgroundColor: 'red',
+        justifyContent: 'center', // 垂直方向の中央に配置
+        alignItems: 'center',    // 水平方向の中央に配置
+        width: 70,
+        borderRadius: 8,
+        marginBottom: 16,
+        alignSelf: 'stretch', // 親要素に高さを合わせる
     },
 });
 

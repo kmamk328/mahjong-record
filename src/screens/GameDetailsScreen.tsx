@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRoute, RouteProp, useNavigation, NavigationProp } from '@react-navigation/native';
-import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, getDocs, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
+
 
 import { RootStackParamList } from '../navigationTypes';
 import { FAB } from 'react-native-paper';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import Icon from 'react-native-vector-icons/Feather';
 
 type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
 
@@ -15,6 +18,18 @@ const GameDetailsScreen: React.FC = () => {
   const route = useRoute<GameDetailsScreenRouteProp>();
   const { hanchan } = route.params;
   const [hanchanDetails, setHanchanDetails] = useState<any[]>([]);
+
+  const imagePaths = [
+    require('../image/pin_1.png'),
+    require('../image/pin_2.png'),
+    require('../image/pin_3.png'),
+    require('../image/pin_4.png'),
+    require('../image/pin_5.jpg'),
+    require('../image/pin_6.png'),
+    require('../image/pin_7.png'),
+    require('../image/pin_8.png'),
+    require('../image/pin_9.png'),
+];
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -101,23 +116,6 @@ const GameDetailsScreen: React.FC = () => {
     }
 };
 
-// const handleRoundPress = (round) => {
-//     navigation.navigate('ScoreInput', {
-//         gameId: hanchan.gameId,
-//         hanchanId: hanchan.id,  // hanchanIdを渡す
-//         round: round, // 既存のラウンド情報を渡す
-//     });
-// };
-
-  // const handleRoundPress = (round) => {
-  //   navigation.navigate('ScoreInput', {
-  //       gameId: hanchan.gameId,
-  //       roundId: round.id, // round.idを渡す
-  //       roundData: round   // その他のroundデータも必要に応じて渡す
-  //   });
-  //   console.log("GameDetail round.id: ", round.id);
-  //   console.log("GameDetail round: ", round);
-  // };
 
   const handleRoundPress = (roundId, roundData) => {
     navigation.navigate('ScoreInput', {
@@ -129,26 +127,21 @@ const GameDetailsScreen: React.FC = () => {
     console.log("GameDetail roundId: ", roundId);
     console.log("GameDetail roundData: ", roundData);
   };
-  // const handleRoundPress = (roundId) => {
-  //   console.log("roundId:", roundId);
-  //   const roundDocRef = doc(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds', roundId);
-  //   getDoc(roundDocRef).then((roundDoc) => {
-  //       if (roundDoc.exists()) {
-  //           const roundData = roundDoc.data();
-  //           console.log("Round data:", roundData);
-  //           navigation.navigate('ScoreInput', {
-  //               gameId: hanchan.gameId,
-  //               hanchanId: hanchan.id,
-  //               roundId: roundId,
-  //               roundData: roundData,
-  //           });
-  //       } else {
-  //           console.log("No such document!");
-  //       }
-  //   }).catch((error) => {
-  //       console.error("Error getting document:", error);
-  //   });
-  // };
+
+  const onDelete = async (roundId) => {
+    try {
+      await deleteDoc(doc(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds', roundId));
+      setHanchanDetails((prevDetails) =>
+        prevDetails.map((hanchanDetail) => ({
+          ...hanchanDetail,
+          rounds: hanchanDetail.rounds.filter((round) => round.id !== roundId),
+        }))
+      );
+    } catch (error) {
+      console.error('Error deleting round:', error);
+    }
+  };
+
 
   if (!hanchanDetails.length) {
     return (
@@ -162,7 +155,12 @@ const GameDetailsScreen: React.FC = () => {
     <View style={styles.container}>
     <ScrollView style={styles.container}>
       <View style={styles.gameBox}>
-        <Text style={styles.dateText}>日時: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
+        <Text style={styles.dateText}>{new Date(hanchan.createdAt.seconds * 1000).toLocaleDateString('ja-JP', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            })}
+        </Text>
         <View style={styles.membersContainer}>
           {hanchan.members && hanchan.members.map((member, index) => (
             <Text key={index} style={styles.memberText}>{member}</Text>
@@ -171,24 +169,41 @@ const GameDetailsScreen: React.FC = () => {
         {hanchanDetails.map((hanchanDetail, index) => (
           <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
             {hanchanDetail.rounds && hanchanDetail.rounds.map((round, idx) => (
-              <TouchableOpacity key={`${round.roundSeq}-${idx}`} style={styles.roundContainer} onPress={() => handleRoundPress(round.id, round)}>
+              <Swipeable
+              key={`${round.roundSeq}-${idx}`}
+              renderRightActions={() => (
+                <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(round.id)}>
+                  <Icon name="trash-2" size={24} color="white" />
+                </TouchableOpacity>
+              )}
+            >
+                <TouchableOpacity
+                key={`${round.roundSeq}-${idx}`}
+                style={styles.roundContainer}
+                onPress={() => handleRoundPress(round.id, round)}
+              >
                 <View style={styles.roundBox}>
-                  <Text style={styles.roundText}>
-                    {round.roundNumber.place}場
-                    {round.roundNumber.round}局
-                    {round.roundNumber.honba}本場
-                  </Text>
-                  {round.isRyuukyoku ? (
-                    <Text style={styles.roundText}>流局</Text>
-                  ) : (
-                    <>
-                      <Text style={styles.winnerNameText}>あがった人: {round.winnerName}</Text>
-                      <Text style={styles.discarderNameText}>放銃したひと: {round.discarderName}</Text>
-                      <Text style={styles.winnerPoints}>{round.winnerPoints}</Text>
-                    </>
-                  )}
+                  <Image
+                    source={imagePaths[idx % imagePaths.length]} // インデックスに基づいて画像を選択
+                    style={styles.imageStyle}
+                  />
+                  <View style={styles.textContainer}>
+                    <Text style={styles.roundText}>
+                      {round.roundNumber.place}場 {round.roundNumber.round}局 {round.roundNumber.honba}本場
+                    </Text>
+                    {round.isRyuukyoku ? (
+                      <Text style={styles.roundText}>流局</Text>
+                    ) : (
+                      <>
+                        <Text style={styles.winnerNameText}>あがった人: {round.winnerName}</Text>
+                        <Text style={styles.discarderNameText}>放銃した人: {round.discarderName}</Text>
+                        <Text style={styles.winnerPoints}>{round.winnerPoints}</Text>
+                      </>
+                    )}
+                  </View>
                 </View>
               </TouchableOpacity>
+            </Swipeable>
             ))}
           </View>
         ))}
@@ -253,6 +268,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   roundBox: {
+    flexDirection: 'row',
     marginBottom: 8,
   },
   roundText: {
@@ -281,6 +297,24 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  imageStyle: {
+    width: 60,              // 画像の幅
+    height: 70,             // 画像の高さ
+    marginRight: 10,        // テキストとの間隔を設定
+  },
+  textContainer: {
+      flex: 1, // 画像の右側に配置されるコンテンツに柔軟な幅を確保
+      justifyContent: 'center', // テキストコンテンツの縦方向の中央揃え
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    justifyContent: 'center', // 垂直方向の中央に配置
+    alignItems: 'center',    // 水平方向の中央に配置
+    width: 70,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignSelf: 'stretch', // 親要素に高さを合わせる
+},
 });
 
 export default GameDetailsScreen;
