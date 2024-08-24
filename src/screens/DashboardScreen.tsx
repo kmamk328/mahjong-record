@@ -19,7 +19,7 @@ const DashboardScreen = () => {
                 backgroundColor: '#FFFFFF',
             },
             headerTintColor: '#000',
-            headerTitle: '成績',
+            headerTitle: '成績ダッシュボード',
             headerTitleAlign: 'center',
         });
     }, [navigation]);
@@ -49,7 +49,7 @@ const DashboardScreen = () => {
                 setYourStats([]);
                 return;
             }
-    
+
             try {
                 // 選択されたメンバーの名前を取得する
                 const selectedMemberDoc = await getDoc(doc(db, 'members', selectedMember));
@@ -63,16 +63,16 @@ const DashboardScreen = () => {
                     orderBy('createdAt', 'desc'),
                     limit(5)
                 );
-    
-                const gamesSnapshot = await getDocs(gamesQuery);
-    
+
+            const gamesSnapshot = await getDocs(gamesQuery);
+
                 if (gamesSnapshot.empty) {
                     setYourStats([]);
                     return;
                 }
-    
+
                 let aggregatedStats = [];
-    
+
                 for (const gameDoc of gamesSnapshot.docs) {
                     const gameId = gameDoc.id;
                     const gameData = gameDoc.data();
@@ -92,18 +92,17 @@ const DashboardScreen = () => {
                         reachWinCount: 0,
                         nakiWinCount: 0,
                         maxWinPoints: 0,
+                        maxWinPointsDisplay: '', // 表示用の元の値を保持する
                         roles: {}
                     };
-    
                     const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
                     const hanchanSnapshot = await getDocs(hanchanCollection);
-    
+
                     for (const hanchanDoc of hanchanSnapshot.docs) {
                         const roundsCollection = collection(db, 'games', gameId, 'hanchan', hanchanDoc.id, 'rounds');
                         const roundsSnapshot = await getDocs(roundsCollection);
-    
                         if (roundsSnapshot.empty) continue;
-    
+
                         roundsSnapshot.forEach((roundDoc) => {
                             const round = roundDoc.data();
                             console.log("round.winner: ", round.winner);
@@ -112,8 +111,18 @@ const DashboardScreen = () => {
                                 gameStats.winCount += 1;
                                 if (round.reach) gameStats.reachWinCount += 1;
                                 if (round.naki) gameStats.nakiWinCount += 1;
-                                if (round.winnerPoints > gameStats.maxWinPoints) gameStats.maxWinPoints = round.winnerPoints;
-    
+
+                                const numericWinnerPoints = convertWinnerPoints(round);
+                                console.log("gameStats.maxWinPoints: ", gameStats.maxWinPoints);
+                                console.log("numericWinnerPoints: ", numericWinnerPoints);
+
+                                if (numericWinnerPoints > gameStats.maxWinPoints) {
+                                    gameStats.maxWinPoints = round.winnerPoints;
+                                    console.log("11111gameStats.maxWinPoints: ", gameStats.maxWinPoints);
+                                    console.log("11111ound.winnerPoints: ", round.winnerPoints);
+                                }
+
+                                //役一覧用
                                 round.selectedRoles?.forEach((role) => {
                                     if (gameStats.roles[role]) {
                                         gameStats.roles[role] += 1;
@@ -127,36 +136,77 @@ const DashboardScreen = () => {
                             }
                         });
                     }
-    
+
                     aggregatedStats.push(gameStats);
                 }
-    
+
                 setYourStats(aggregatedStats);
             } catch (error) {
                 console.error('Error fetching games:', error);
             }
         };
-    
+
         fetchData();
-    }, [selectedMember]);
-            
-    const handlePickerSelect = (value) => {
-        setSelectedMember(value);
-        setModalVisible(false); // モーダルを閉じる
+    }, [selectedMember,selectedMemberName]);
+
+    // const handlePickerSelect = (value) => {
+    //     setSelectedMember(value);
+    //     setModalVisible(false); // モーダルを閉じる
+    // };
+    const handlePickerSelect = async (value) => {
+        try {
+            // 選択されたメンバーの名前を取得する
+            const selectedMemberDoc = await getDoc(doc(db, 'members', value));
+            const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
+            setSelectedMember(value);  // メンバーのIDを保存
+            setSelectedMemberName(memberName);  // メンバーの名前を保存
+
+            console.log('Selected Member ID:', value);
+            console.log('Selected Member Name:', memberName);
+
+            setModalVisible(false); // モーダルを閉じる
+        } catch (error) {
+            console.error('Error fetching selected member name: ', error);
+        }
     };
+
+    function convertWinnerPoints(round) {
+        console.log("function round.winnerPoints: ", round.winnerPoints);
+        if (!round.winnerPoints) {
+            return 0; // または適切なデフォルト値を返す
+        }
+        let winnerPoints = round.winnerPoints;
+        console.log("function winnerPoints: ", winnerPoints);
+        if (winnerPoints.includes('オール')) {
+            // "500オール" 形式の場合
+            const points = parseInt(winnerPoints.replace('オール', ''), 10);
+            return points * 3;
+        } else if (winnerPoints.includes('子(') && winnerPoints.includes('親(')) {
+            // "子(300) 親(500)" 形式の場合
+            const childPoints = parseInt(winnerPoints.match(/子\((\d+)\)/)[1], 10);
+            const parentPoints = parseInt(winnerPoints.match(/親\((\d+)\)/)[1], 10);
+            return childPoints * 2 + parentPoints;
+        } else {
+            // その他の形式の場合（数値だけを抽出）
+            return parseInt(winnerPoints, 10);
+        }
+    }
 
     return (
         <View style={styles.container}>
             <ScrollView style={styles.container}>
                 <View style={styles.pickerContainer}>
-                    <TouchableOpacity
-                        style={styles.pickerButton}
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Text style={styles.pickerButtonText}>
-                            {selectedMember ? members.find(member => member.id === selectedMember)?.name : 'メンバーを選択してください'}
-                        </Text>
-                    </TouchableOpacity>
+                    <View style={styles.labelAndPicker}>
+                        <Text style={styles.label}>メンバー名 : </Text>
+                        <TouchableOpacity
+                            style={styles.pickerButton}
+                            onPress={() => setModalVisible(true)}
+                        >
+                            <Text style={styles.pickerButtonText}>
+                                {selectedMember ? members.find(member => member.id === selectedMember)?.name : '選択'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 <View style={styles.summaryContainer}>
                     {yourStats.length > 0 ? (
@@ -171,16 +221,16 @@ const DashboardScreen = () => {
                                 <Text style={styles.summaryText}>
                                     あがり回数: {stats.winCount}
                                 </Text>
-                                <Text style={styles.summaryText}>
+                                <Text style={styles.discardText}>
                                     放銃回数: {stats.discardCount}
                                 </Text>
-                                <Text style={styles.summaryText}>
+                                <Text style={styles.otherText}>
                                     リーチあがり回数: {stats.reachWinCount}
                                 </Text>
-                                <Text style={styles.summaryText}>
+                                <Text style={styles.otherText}>
                                     鳴きあがり回数: {stats.nakiWinCount}
                                 </Text>
-                                <Text style={styles.summaryText}>
+                                <Text style={styles.otherText}>
                                     最高打点: {stats.maxWinPoints}
                                 </Text>
                                 {/* <Text style={styles.summaryText}>
@@ -193,12 +243,12 @@ const DashboardScreen = () => {
                         ))
                     ) : (
                         <View style={styles.summaryBox}>
+                            <Text style={styles.getDateText}>日ごとの成績を表示します</Text>
                             <Text style={styles.summaryText}>あがり回数: 0</Text>
-                            <Text style={styles.summaryText}>放銃回数: 0</Text>
-                            <Text style={styles.summaryText}>リーチあがり回数: 0</Text>
-                            <Text style={styles.summaryText}>鳴きあがり回数: 0</Text>
-                            <Text style={styles.summaryText}>最高打点: 0</Text>
-                            <Text style={styles.summaryText}>役の集計: なし</Text>
+                            <Text style={styles.discardText}>放銃回数: 0</Text>
+                            <Text style={styles.otherText}>リーチあがり回数: 0</Text>
+                            <Text style={styles.otherText}>鳴きあがり回数: 0</Text>
+                            <Text style={styles.otherText}>最高打点: 0</Text>
                         </View>
                     )}
                 </View>
@@ -246,14 +296,25 @@ const styles = StyleSheet.create({
         width: '80%',
         maxHeight: '50%',
     },
+    labelAndPicker: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginRight: 10, // テキストとピッカーの間の余白
+        marginLeft: 20,
+    },
     pickerButton: {
+        flex: 1,
         borderWidth: 1,
         borderColor: 'gray',
         borderRadius: 4,
         padding: 10,
         backgroundColor: '#f0f0f0',
-        marginHorizontal: 16,
-        marginBottom: 20,
+        marginHorizontal: 1,
+        marginBottom: 1,
         fontSize: 18,
         color: 'black',
         textAlign: 'center',
@@ -282,6 +343,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginVertical: 5,
         color: 'blue',
+    },
+    discardText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginVertical: 5,
+        color: 'red',
+    },
+    otherText: {
+        fontSize: 16,
+        // fontWeight: 'bold',
+        marginVertical: 5,
+        color: 'black',
     },
     summaryValue: {
         fontSize: 18,

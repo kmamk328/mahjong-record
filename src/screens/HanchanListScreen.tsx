@@ -15,15 +15,15 @@ const HanchanListScreen = ({ route }) => {
   const navigation = useNavigation();
 
   const imagePaths = [
-    require('../image/pin_1.png'),
-    require('../image/pin_2.png'),
-    require('../image/pin_3.png'),
-    require('../image/pin_4.png'),
-    require('../image/pin_5.jpg'),
-    require('../image/pin_6.png'),
-    require('../image/pin_7.png'),
-    require('../image/pin_8.png'),
-    require('../image/pin_9.png'),
+    require('../image/sou_1.png'),
+    require('../image/sou_2.png'),
+    require('../image/sou_3.png'),
+    require('../image/sou_4.png'),
+    require('../image/sou_5.png'),
+    require('../image/sou_6.png'),
+    require('../image/sou_7.png'),
+    require('../image/sou_8.png'),
+    require('../image/sou_9.png'),
 ];
 
   useLayoutEffect(() => {

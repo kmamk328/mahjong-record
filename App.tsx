@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getAuth, signInAnonymously } from 'firebase/auth';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import MemberInputScreen from './src/screens/MemberInputScreen';
 import ScoreInputScreen from './src/screens/ScoreInputScreen';
@@ -56,7 +57,7 @@ function InquireStackNavigator() {
   );
 }
 
-function DashborardStackNavigator() {
+function DashboardStackNavigator() {
   return (
     <Stack.Navigator initialRouteName="Dashboard">
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
@@ -69,23 +70,36 @@ export default function App() {
   return (
     <NavigationContainer>
       <Tab.Navigator>
-        <Tab.Screen
-          name="戦歴"
+      <Tab.Screen
+          name="記録/入力"
           component={InquireStackNavigator}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="clipboard-list-outline" color={color} size={size} />
+            ),
+          }}
         />
         <Tab.Screen
-          name="記録"
-          component={DashborardStackNavigator}
-          // component={DashboardScreen}
-          // component={TestScreen}
-          options={{ headerShown: false }}
+          name="成績"
+          component={DashboardStackNavigator}
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="chart-line" color={color} size={size} />
+            ),
+          }}
         />
         <Tab.Screen
-          name="アカウント"
+          name="その他"
           // component={LoginScreen}
           component={TestScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+            tabBarIcon: ({ color, size }) => (
+              <Icon name="account-circle-outline" color={color} size={size} />
+            ),
+          }}
         />
       </Tab.Navigator>
     </NavigationContainer>
