@@ -6,9 +6,8 @@ import { db, auth } from '../../firebaseConfig'; // Firebase authentication inst
 import MemberInput from '../components/MemberInput';
 
 const MemberInputScreen = ({ route }) => {
-  // const { gameId } = route.params || {};
   const { gameId } = route.params || {};
-  const [members, setMembers] = useState(['', '', '', '']); // 「あなた」を最初に設定
+  const [members, setMembers] = useState(['', '', '', '']);
   const [existingMembers, setExistingMembers] = useState([]);
   const [reset, setReset] = useState(false);
   const navigation = useNavigation();
@@ -25,16 +24,7 @@ const MemberInputScreen = ({ route }) => {
     fetchMembers();
   }, []);
 
-  // useEffect(() => {
-  //   // 匿名認証されたユーザーのUIDを「あなた」に設定
-  //   const currentUser = auth.currentUser;
-  //   if (currentUser) {
-  //     setMembers((prevMembers) => [currentUser.uid, ...prevMembers.slice(1)]);
-  //   }
-  // }, []);
-
   const handleChange = (text, index) => {
-    // if (index === 0) return; // 「あなた」の入力エリアは変更不可
 
     const newMembers = [...members];
     newMembers[index] = text;
@@ -46,26 +36,26 @@ const MemberInputScreen = ({ route }) => {
       if (member === '') continue;
 
       const existingMember = existingMembers.find(existingMember => existingMember.name === member);
-      if (existingMember) {
-        Alert.alert(
-          '確認',
-          `${member}は以前も入力したことがありますか？\n違う人だったら違う名前で登録してください`,
-          [
-            {
-              text: '入力しなおす',
-              onPress: () => {},
-              style: 'cancel',
-            },
-            {
-              text: 'この名前を使用します',
-              onPress: async () => {
-                await proceedWithNext(existingMember.id);
-              },
-            },
-          ]
-        );
-        return;
-      }
+      // if (existingMember) {
+      //   Alert.alert(
+      //     '確認',
+      //     `${member}は以前も入力したことがありますか？\n違う人だったら違う名前で登録してください`,
+      //     [
+      //       {
+      //         text: '入力しなおす',
+      //         onPress: () => {},
+      //         style: 'cancel',
+      //       },
+      //       {
+      //         text: 'この名前を使用します',
+      //         onPress: async () => {
+      //           await proceedWithNext(existingMember.id);
+      //         },
+      //       },
+      //     ]
+      //   );
+      //   return;
+      // }
     }
 
     await proceedWithNext();
@@ -111,15 +101,6 @@ const MemberInputScreen = ({ route }) => {
       <View style={styles.memberInputBox}>
         <Text style={styles.getTitleText}>メンバーを入力してください</Text>
         <View style={styles.divider} />
-
-        {/* <View style={styles.container}>
-          <Text style={styles.label}>メンバー 1</Text>
-          <TextInput
-            style={styles.input} // 背景色をグレーにして編集不可を視覚的に表示
-            value="あなた"
-            editable={false} // 編集不可
-          />
-        </View> */}
 
         {members.map((member, index) => (
           <MemberInput
