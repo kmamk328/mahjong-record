@@ -213,7 +213,7 @@ const ScoreInputScreen = () => {
       },
       headerTintColor: '#000',
       headerTitle: 'スコア入力',
-      headerTitleAlign: 'center', 
+      headerTitleAlign: 'center',
     });
   }, [navigation]);
 
@@ -358,14 +358,12 @@ const ScoreInputScreen = () => {
       console.log("roundId: ", roundId);
       if (roundId) {
         // 既存のラウンド情報を更新
-        // const roundRef = doc(roundsRef, roundId);
         const roundRef = doc(db, 'games', gameId, 'hanchan', hanchanId, 'rounds', roundId);
         await updateDoc(roundRef, {
             ...currentRound,
             roles: selectedRoles,
             roundSeq,
         });
-        // Alert.alert('更新完了', 'ラウンドデータが更新されました');
       } else {
         const roundsRef = collection(db, 'games', gameId, 'hanchan', hanchanId, 'rounds');
         // 新規ラウンドを追加
@@ -387,7 +385,6 @@ const ScoreInputScreen = () => {
         setRoundSeq(roundSeq + 1);
       }
 
-      
 
       if (currentRound.winner) {
         const winnerRef = doc(db, 'members', currentRound.winner);
@@ -674,9 +671,9 @@ const ScoreInputScreen = () => {
           </>
         )}
 
-          
+
       </View>
-      
+
 
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>

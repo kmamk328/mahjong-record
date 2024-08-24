@@ -64,6 +64,7 @@ const MemberInputScreen = ({ route }) => {
   const proceedWithNext = async (existingMemberId) => {
     const membersCollection = collection(db, 'members');
     const memberIds = [];
+    const currentUser = auth.currentUser;
 
     for (const member of members) {
       if (member === '') continue;
@@ -82,6 +83,7 @@ const MemberInputScreen = ({ route }) => {
     const newGameRef = await addDoc(collection(db, 'games'), {
       createdAt: new Date(),
       members: memberIds,
+      createdUser: currentUser?.uid,
     });
 
     navigation.navigate('HanchanList', { gameId: newGameRef.id });

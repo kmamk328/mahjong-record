@@ -2,9 +2,9 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
-import { FAB } from 'react-native-paper'; // Floating Action Button
+import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc, deleteDoc, where } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
+import { FAB } from 'react-native-paper';
 import { Image } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 
@@ -30,8 +30,17 @@ const InquireScreen = () => {
 
     const fetchData = async (loadMore = false) => {
         try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return; // ログインしていない場合は何もしない
+
             const gamesCollection = collection(db, 'games');
-            const gamesQuery = query(gamesCollection, orderBy('createdAt', 'desc'), limit(10), ...(lastVisible && loadMore ? [startAfter(lastVisible)] : []));
+            const gamesQuery = query(
+                gamesCollection,
+                where('createdUser', '==', currentUser.uid), // createdUser とログインしているユーザーを一致させる
+                orderBy('createdAt', 'desc'),
+                limit(10),
+                ...(lastVisible && loadMore ? [startAfter(lastVisible)] : [])
+            );
             const gamesSnapshot = await getDocs(gamesQuery);
 
             const gamesList = [];
@@ -65,6 +74,7 @@ const InquireScreen = () => {
             } else {
                 setGames(gamesList);
             }
+            console.log("gamesList:", gamesList);
 
             setLastVisible(gamesSnapshot.docs[gamesSnapshot.docs.length - 1]);
         } catch (error) {
@@ -87,7 +97,7 @@ const InquireScreen = () => {
             },
             headerTintColor: '#000',
             headerTitle: '戦績照会',
-            headerTitleAlign: 'center', 
+            headerTitleAlign: 'center',
         });
     }, [navigation]);
 
@@ -161,34 +171,40 @@ const InquireScreen = () => {
                 scrollEventThrottle={400}
             >
                 <View style={styles.innerContainer}>
-                    {games.map((game, index) => (
-                        <Swipeable
-                            key={game.id}
-                            renderRightActions={() => (
-                                <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(game.id)}>
-                                    <Icon name="trash-2" size={24} color="white" />
-                                </TouchableOpacity>
-                            )}
-                        >
-                        <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
-                            <Image
-                                source={imagePaths[index % imagePaths.length]} // インデックスに基づいて画像を選択
-                                style={styles.imageStyle}
-                            />
-                            <View style={styles.textContainer}>
-                                <Text style={styles.getDateText}>{game.createdAt}</Text>
-                                <View style={styles.membersContainer}>
-                                    {game.members.map((member, index) => (
-                                        <View key={index} style={styles.member}>
-                                            <Icon name="user" size={20} color="gray" />
-                                            <Text style={styles.getStartedText}>{member}</Text>
+                    {games.length === 0 ? (
+                        <View style={styles.noDataContainer}>
+                            <Text style={styles.noDataText}>データがありません</Text>
+                        </View>
+                    ) : (
+                        games.map((game, index) => (
+                            <Swipeable
+                                key={`${game.id}-${index}`}
+                                renderRightActions={() => (
+                                    <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(game.id)}>
+                                        <Icon name="trash-2" size={24} color="white" />
+                                    </TouchableOpacity>
+                                )}
+                            >
+                                <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
+                                    <Image
+                                        source={imagePaths[index % imagePaths.length]} // インデックスに基づいて画像を選択
+                                        style={styles.imageStyle}
+                                    />
+                                    <View style={styles.textContainer}>
+                                        <Text style={styles.getDateText}>{game.createdAt}</Text>
+                                        <View style={styles.membersContainer}>
+                                            {game.members.map((member, index) => (
+                                                <View key={index} style={styles.member}>
+                                                    <Icon name="user" size={20} color="gray" />
+                                                    <Text style={styles.getStartedText}>{member}</Text>
+                                                </View>
+                                            ))}
                                         </View>
-                                    ))}
-                                </View>
-                            </View>
-                        </TouchableOpacity>
-                        </Swipeable>
-                    ))}
+                                    </View>
+                                </TouchableOpacity>
+                            </Swipeable>
+                        ))
+                    )}
                     {isFetchingMore && (
                         <View style={styles.loadingMoreContainer}>
                             <ActivityIndicator size="large" />
@@ -225,6 +241,16 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    noDataContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    noDataText: {
+        fontSize: 18,
+        color: 'gray',
     },
     inquirebox: {
         marginBottom: 16,

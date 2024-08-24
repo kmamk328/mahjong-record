@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } f
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { db, auth } from '../../firebaseConfig';
 
 const DashboardScreen = () => {
     const navigation = useNavigation();
@@ -51,6 +51,7 @@ const DashboardScreen = () => {
             }
 
             try {
+                const currentUser = auth.currentUser;
                 // 選択されたメンバーの名前を取得する
                 const selectedMemberDoc = await getDoc(doc(db, 'members', selectedMember));
                 const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
@@ -60,6 +61,7 @@ const DashboardScreen = () => {
                 const gamesQuery = query(
                     collection(db, 'games'),
                     where('members', 'array-contains', selectedMember),
+                    where('createdUser', '==', currentUser.uid),
                     orderBy('createdAt', 'desc'),
                     limit(5)
                 );
