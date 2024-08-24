@@ -212,23 +212,28 @@ const DashboardScreen = () => {
                     {yourStats.length > 0 ? (
                         yourStats.map((stats, index) => (
                             <View key={index} style={styles.summaryBox}>
+                                <View style={styles.dateContainer}>
+                                    <Text style={styles.getDateText}>
+                                        {stats.gameDate}
+                                    </Text>
+                                </View>
                                 {/* <Text style={styles.summaryText}>
                                     Game ID: {stats.gameId}
                                 </Text> */}
-                                <Text style={styles.getDateText}>
+                                {/* <Text style={styles.getDateText}>
                                     {stats.gameDate}
-                                </Text>
+                                </Text> */}
                                 <Text style={styles.summaryText}>
-                                    あがり回数: {stats.winCount}
+                                    あがり回数　: {stats.winCount}
                                 </Text>
                                 <Text style={styles.discardText}>
-                                    放銃回数: {stats.discardCount}
+                                    放銃回数　　: {stats.discardCount}
                                 </Text>
                                 <Text style={styles.otherText}>
-                                    リーチあがり回数: {stats.reachWinCount}
+                                    リーチあがり回数　: {stats.reachWinCount}
                                 </Text>
                                 <Text style={styles.otherText}>
-                                    鳴きあがり回数: {stats.nakiWinCount}
+                                    鳴きあがり回数　　: {stats.nakiWinCount}
                                 </Text>
                                 <Text style={styles.otherText}>
                                     最高打点: {stats.maxWinPoints}
@@ -243,7 +248,12 @@ const DashboardScreen = () => {
                         ))
                     ) : (
                         <View style={styles.summaryBox}>
-                            <Text style={styles.getDateText}>日ごとの成績を表示します</Text>
+                            <View style={styles.dateContainer}>
+                                    <Text style={styles.getDateText}>
+                                    日ごとの成績を表示します
+                                    </Text>
+                                </View>
+                            {/* <Text style={styles.getDateText}>日ごとの成績を表示します</Text> */}
                             <Text style={styles.summaryText}>あがり回数: 0</Text>
                             <Text style={styles.discardText}>放銃回数: 0</Text>
                             <Text style={styles.otherText}>リーチあがり回数: 0</Text>
@@ -340,13 +350,13 @@ const styles = StyleSheet.create({
     },
     summaryText: {
         fontSize: 16,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
         marginVertical: 5,
         color: 'blue',
     },
     discardText: {
         fontSize: 16,
-        fontWeight: 'bold',
+        // fontWeight: 'bold',
         marginVertical: 5,
         color: 'red',
     },
@@ -361,11 +371,19 @@ const styles = StyleSheet.create({
         marginVertical: 5,
         color: 'blue',
     },
+    dateContainer: {
+        backgroundColor: '#32CD32',  // 背景色を緑に設定
+        padding: 5,               // 内側の余白
+        borderRadius: 5,           // 角を丸める
+        marginBottom: 10,          // 下部の余白
+        alignItems: 'center',      // 中央揃え
+    },
     getDateText: {
         fontSize: 20,
         lineHeight: 24,
         marginLeft: 0,     // 必要に応じて余白を調整
         fontWeight: 'bold',
+        color: 'white',
     },
 });
 

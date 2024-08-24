@@ -14,6 +14,12 @@ import GameDetailsScreen from './src/screens/GameDetailsScreen';
 import HanchanListScreen from './src/screens/HanchanListScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
+import MenuScreen from './src/screens/MenuScreen';
+import FAQScreen from './src/screens/FAQScreen';
+import InquiryScreen from './src/screens/InquiryScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import AppInfoScreen from './src/screens/AppInfoScreen';
+import NoticeScreen from './src/screens/NoticeScreen';
 import TestScreen from './src/screens/TestScreen';
 
 const Stack = createStackNavigator();
@@ -29,6 +35,7 @@ signInAnonymously(auth)
   .catch((error) => {
     console.error('Error signing in anonymously: ', error);
   });
+
 
 function MainStackNavigator() {
   return (
@@ -65,6 +72,18 @@ function DashboardStackNavigator() {
   );
 }
 
+function MenuStackNavigator() {
+  return (
+      <Stack.Navigator initialRouteName="Menu">
+        <Stack.Screen name="Menu" component={MenuScreen} />
+        <Stack.Screen name="FAQ" component={FAQScreen} />
+        <Stack.Screen name="Notice" component={NoticeScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="AppInfo" component={AppInfoScreen} />
+      </Stack.Navigator>
+  );
+}
+
 
 export default function App() {
   return (
@@ -91,9 +110,9 @@ export default function App() {
           }}
         />
         <Tab.Screen
-          name="その他"
+          name="メニュー"
           // component={LoginScreen}
-          component={TestScreen}
+          component={MenuStackNavigator}
           options={{
             headerShown: false,
             tabBarIcon: ({ color, size }) => (

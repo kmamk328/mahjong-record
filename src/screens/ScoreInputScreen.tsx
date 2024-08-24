@@ -16,6 +16,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { FAB } from 'react-native-paper'; // Floating Action Button
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 type RootStackParamList = {
   ScoreInput: { gameId: string };
@@ -740,7 +741,9 @@ const ScoreInputScreen = () => {
     </ScrollView>
     <FAB
       style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
-      small icon="chevron-right"
+      small
+      // icon="chevron-right"
+      icon={() => <MaterialCommunityIcons name="content-save" size={24} color="#000" />}
       onPress={confirmSave}
     />
     </View>

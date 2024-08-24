@@ -133,7 +133,7 @@ const HanchanListScreen = ({ route }) => {
                     style={styles.imageStyle}
                 />
                 <View style={styles.textContainer}>
-                    <Text style={styles.hanchanText}>半荘 {index + 1}</Text>
+                    <Text style={styles.hanchanText}>{index + 1} 半荘目</Text>
                     {/* <Text style={styles.hanchanText}>日時: {hanchan.createdAt.toDate().toLocaleDateString('ja-JP', {
                       year: 'numeric',
                       month: '2-digit',
