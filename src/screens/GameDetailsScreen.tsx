@@ -104,13 +104,24 @@ const GameDetailsScreen: React.FC = () => {
         const newRoundId = newRoundRef.id;
 
         // 新しいラウンドの編集画面へ遷移
+        // navigation.navigate('ScoreInput', {
+        //     gameId: hanchan.gameId,
+        //     hanchanId: hanchan.id,  // hanchanIdを渡す
+        //     round: { id: newRoundId, ...newRound }, // 作成された新しいラウンド情報を渡す
+        // });
         navigation.navigate('ScoreInput', {
-            gameId: hanchan.gameId,
-            hanchanId: hanchan.id,  // hanchanIdを渡す
-            round: { id: newRoundId, ...newRound }, // 作成された新しいラウンド情報を渡す
-        });
+          gameId: hanchan.gameId,
+          hanchanId: hanchan.id,
+          roundId: newRoundRef.id, // 新しく作成したラウンドIDを渡す
+          roundData: {
+              createdAt: new Date().toISOString(),
+              // その他必要な初期データ
+          },
+      });
         console.log("gameId: ", hanchan.gameId);
         console.log("hanchanId: ", hanchan.id);
+        console.log("New Hanchan created with ID(handleAddRound):", newRoundRef.id, "at", new Date().toLocaleString());
+
     } catch (error) {
         console.error("Error adding new round: ", error);
     }

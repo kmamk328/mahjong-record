@@ -78,6 +78,7 @@ const HanchanListScreen = ({ route }) => {
         createdAt: new Date(),
         members: [], // メンバーの初期値（必要に応じて設定）
       });
+      console.log("New Hanchan created with ID(fetchHanchan):", newHanchanRef.id, "at", new Date().toLocaleString());
       navigation.navigate('ScoreInput', { gameId, hanchanId: newHanchanRef.id });
     } catch (error) {
       console.error('Error creating new hanchan:', error);

@@ -111,9 +111,9 @@ const MemberInputScreen = ({ route }) => {
             value={member}
             onChange={(text) => handleChange(text, index)}
             // placeholder={`メンバー ${index + 1}`}
-            placeholder={`メンバー`}
+            placeholder={`選択 or 入力してください`}
             reset={reset} // Pass the reset state
-            label={`メンバー ${index + 1}`} // Add label prop
+            label={` ${index + 1}人目`} // Add label prop
           />
         ))}
 

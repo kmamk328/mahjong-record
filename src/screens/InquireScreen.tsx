@@ -32,18 +32,18 @@ const InquireScreen = () => {
         try {
             const currentUser = auth.currentUser;
             if (!currentUser) return; // ログインしていない場合は何もしない
-
+    
             const gamesCollection = collection(db, 'games');
             const gamesQuery = query(
                 gamesCollection,
                 where('createdUser', '==', currentUser.uid), // createdUser とログインしているユーザーを一致させる
                 orderBy('createdAt', 'desc'),
-                limit(10),
-                ...(lastVisible && loadMore ? [startAfter(lastVisible)] : [])
+                ...(lastVisible && loadMore ? [startAfter(lastVisible)] : []),
+                limit(10)
             );
             const gamesSnapshot = await getDocs(gamesQuery);
-
-            const gamesList = [];
+    
+            const newGamesList = [];
             for (const gameDoc of gamesSnapshot.docs) {
                 const gameData = gameDoc.data();
                 const membersNames = await Promise.all(
@@ -52,31 +52,36 @@ const InquireScreen = () => {
                         return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
                     })
                 );
-
+    
                 const hanchanQuery = collection(db, 'games', gameDoc.id, 'hanchan');
                 const hanchanSnapshot = await getDocs(hanchanQuery);
                 const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => ({ id: hanchanDoc.id, ...hanchanDoc.data(), gameId: gameDoc.id }));
-
+    
                 // 日付をフォーマット
                 const createdAtDate = gameData.createdAt.toDate();
                 const formattedDate = `${createdAtDate.getFullYear()}/${String(createdAtDate.getMonth() + 1).padStart(2, '0')}/${String(createdAtDate.getDate()).padStart(2, '0')}`;
-
-                gamesList.push({
+    
+                newGamesList.push({
                     id: gameDoc.id,
                     createdAt: formattedDate,
                     members: membersNames,
                     hanchan: hanchanList,
                 });
             }
-
+    
             if (loadMore) {
-                setGames((prevGames) => [...prevGames, ...gamesList]);
+                // 重複をチェックしながら新しいデータを追加
+                setGames((prevGames) => [
+                    ...prevGames,
+                    ...newGamesList.filter(newGame => !prevGames.some(game => game.id === newGame.id))
+                ]);
             } else {
-                setGames(gamesList);
+                setGames(newGamesList);  // 初回またはリフレッシュ時は新しいデータでリセット
             }
-            console.log("gamesList:", gamesList);
-
-            setLastVisible(gamesSnapshot.docs[gamesSnapshot.docs.length - 1]);
+    
+            if (!gamesSnapshot.empty) {
+                setLastVisible(gamesSnapshot.docs[gamesSnapshot.docs.length - 1]);
+            }
         } catch (error) {
             console.error('Error fetching games:', error);
         } finally {
@@ -178,7 +183,8 @@ const InquireScreen = () => {
                     ) : (
                         games.map((game, index) => (
                             <Swipeable
-                                key={`${game.id}-${index}`}
+                                // key={`${game.id}-${index}`}
+                                key={game.id}
                                 renderRightActions={() => (
                                     <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(game.id)}>
                                         <Icon name="trash-2" size={24} color="white" />
