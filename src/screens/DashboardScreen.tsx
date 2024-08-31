@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } f
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import ContentLoader, { Rect } from 'react-content-loader/native';
 import { db, auth } from '../../firebaseConfig';
 
 const DashboardScreen = () => {
@@ -12,6 +13,7 @@ const DashboardScreen = () => {
     const [selectedMemberName, setSelectedMemberName] = useState('');
     const [members, setMembers] = useState([]); // 全メンバーを保存
     const [modalVisible, setModalVisible] = useState(false);
+    const [loading, setLoading] = useState(true); // スケルトンUI表示のためのローディング状態
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -28,8 +30,15 @@ const DashboardScreen = () => {
     useEffect(() => {
         const fetchMembers = async () => {
             try {
+                const currentUser = auth.currentUser;
+                if (!currentUser) return;
+
                 const membersCollection = collection(db, 'members');
-                const membersSnapshot = await getDocs(membersCollection);
+                const membersQuery = query(
+                    membersCollection,
+                    where('createdUser', '==', currentUser.uid) // 現在のユーザーが作成したメンバーのみを取得
+                );
+                const membersSnapshot = await getDocs(membersQuery);
                 const membersList = membersSnapshot.docs.map((doc) => ({
                     id: doc.id,
                     name: doc.data().name,
@@ -51,6 +60,8 @@ const DashboardScreen = () => {
             }
 
             try {
+                setLoading(true); // データ取得中はローディング状態に
+
                 const currentUser = auth.currentUser;
                 // 選択されたメンバーの名前を取得する
                 const selectedMemberDoc = await getDoc(doc(db, 'members', selectedMember));
@@ -145,6 +156,8 @@ const DashboardScreen = () => {
                 setYourStats(aggregatedStats);
             } catch (error) {
                 console.error('Error fetching games:', error);
+            } finally {
+                setLoading(false); // データ取得後にローディング終了
             }
         };
 

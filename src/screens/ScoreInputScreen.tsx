@@ -118,40 +118,7 @@ const ScoreInputScreen = () => {
     });
   }, [navigation]);
 
-  // useEffect(() => {
-  //   const fetchMembers = async () => {
-  //     const gameDoc = await getDoc(doc(db, 'games', gameId));
-  //     const gameData = gameDoc.data();
-  //     if (!gameData) throw new Error('ゲームデータが見つかりません');
-  //     const memberIds = gameData.members;
-  //     const memberNames = [];
-  //     for (const memberId of memberIds) {
-  //       const memberDoc = await getDoc(doc(db, 'members', memberId));
-  //       const memberData = memberDoc.data();
-  //       if (memberData) {
-  //         memberNames.push({ id: memberId, name: memberData.name });
-  //       }
-  //     }
-  //     setMembers(memberNames);
-  //     console.log("メンバー:", memberNames);
-  //   };
 
-  //   const fetchHanchan = async () => {
-  //     if (hanchanId) return; // すでにhanchanIdが存在する場合は、再実行しない
-  //     const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
-  //     const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
-  //     if (!hanchanSnapshot.empty) {
-  //       const latestHanchan = hanchanSnapshot.docs[0];
-  //       setCurrentRound({ ...currentRound, roundSeq: latestHanchan.data().roundSeq + 1 });
-  //     } else {
-  //       const newHanchanRef = await addDoc(hanchanCollection, { createdAt: new Date() });
-  //       setCurrentRound({ ...currentRound, roundSeq: 1 });
-  //     }
-  //   };
-
-  //   fetchMembers();
-  //   fetchHanchan();
-  // }, [gameId]);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -192,51 +159,7 @@ const ScoreInputScreen = () => {
     fetchHanchan();
   }, [gameId]);
 
-  // useEffect(() => {
-  //   const fetchMembers = async () => {
-  //     const gameDoc = await getDoc(doc(db, 'games', gameId));
-  //     const memberIds = gameDoc.data().members;
-  //     const memberNames = [];
-  //     for (const memberId of memberIds) {
-  //       const memberDoc = await getDoc(doc(db, 'members', memberId));
-  //       memberNames.push({ id: memberId, name: memberDoc.data().name });
-  //     }
-  //     setMembers(memberNames);
-  //   };
 
-  //   const fetchHanchan = async () => {
-  //     const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
-  //     const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
-  //     if (!hanchanSnapshot.empty) {
-  //       const latestHanchan = hanchanSnapshot.docs[0];
-  //       setHanchanId(latestHanchan.id);
-  //       const roundsCollection = collection(db, 'games', gameId, 'hanchan', latestHanchan.id, 'rounds');
-  //       const roundsSnapshot = await getDocs(query(roundsCollection, orderBy('roundSeq', 'desc')));
-  //       if (!roundsSnapshot.empty) {
-  //         const lastRound = roundsSnapshot.docs[0].data();
-  //         setRoundSeq(lastRound.roundSeq + 1);
-  //       } else {
-  //         setRoundSeq(1);
-  //       }
-  //     } else {
-  //       const newHanchanRef = await addDoc(hanchanCollection, { createdAt: new Date() });
-  //       setHanchanId(newHanchanRef.id);
-  //       setRoundSeq(1);
-  //     }
-  //   };
-
-  //   fetchMembers();
-  //   fetchHanchan();
-  // }, [gameId]);
-
-
-
-  // useEffect(() => {
-  //   // もしround情報がルートから渡されている場合は、currentRoundにセット
-  //   if (round) {
-  //     setCurrentRound(round);
-  //   }
-  // }, [round]);
   useEffect(() => {
     // もしround情報がルートから渡されている場合は、currentRoundにセット
     if (roundId) {
@@ -301,19 +224,6 @@ const ScoreInputScreen = () => {
     updateAvailablePoints();
   }, [currentRound.isTsumo, currentRound.isOya]);
 
-  const handleChange = (key, value) => {
-    setCurrentRound({ ...currentRound, [key]: value });
-  };
-
-  const handleRoundNumberChange = (key, value) => {
-    setCurrentRound({
-      ...currentRound,
-      roundNumber: {
-        ...currentRound.roundNumber,
-        [key]: value
-      }
-    });
-  };
 
   const toggleRoleSelection = (role) => {
     const updatedRoles = selectedRoles.includes(role)
@@ -321,11 +231,6 @@ const ScoreInputScreen = () => {
       : [...selectedRoles, role];
     setSelectedRoles(updatedRoles);
     updateFilteredPoints(updatedRoles);
-  };
-
-  const handleRoleSelect = (role) => {
-    setSelectedRoles(prevRoles => [...prevRoles, role]);
-    setModalVisible(false);
   };
 
   const updateFilteredPoints = (updatedRoles) => {
@@ -400,22 +305,28 @@ const handleNext = async () => {
   try {
     const currentUser = auth.currentUser?.uid;
 
-    console.log('gameId::::', gameId);
-    console.log('hanchanId::::', hanchanId);
-    console.log('roundId::::', roundId);
+    console.log('gameId:', gameId);
+    console.log('hanchanId:', hanchanId);
+    console.log('roundId:', roundId);
+    console.log('currentRound:', currentRound);
+    console.log('selectedRoles:', selectedRoles);
+    console.log('roundSeq:', roundSeq);
 
     if (roundId) {
       // 既存のラウンド情報を更新
       const roundRef = doc(db, 'games', gameId, 'hanchan', hanchanId, 'rounds', roundId);
+      console.log('Updating round with ID:', roundId);
       await updateDoc(roundRef, {
         ...currentRound,
         roles: selectedRoles,
         roundSeq,
         // createdUser: currentUser,
       });
+      console.log('Round updated successfully');
     } else {
       // 新規ラウンドを追加
       const roundsRef = collection(db, 'games', gameId, 'hanchan', hanchanId, 'rounds');
+      console.log('Creating new round in game:', gameId, 'and hanchan:', hanchanId);
       const newRoundRef = await addDoc(roundsRef, {
         ...currentRound,
         isTsumo: currentRound.isTsumo,
@@ -431,10 +342,7 @@ const handleNext = async () => {
         roundSeq,
         // createdUser: currentUser,
       });
-      console.log("New Round created with ID(handleNext):", newRoundRef.id, "at", new Date().toLocaleString());
-      console.log('roundId::::addDoc:::', roundId);
-      // 次のラウンドのために roundSeq を更新
-      setRoundSeq(roundSeq + 1);
+      console.log("New Round created with ID:", newRoundRef.id, "at", new Date().toLocaleString());
     }
 
     // 勝者のポイント更新
@@ -442,9 +350,11 @@ const handleNext = async () => {
       const winnerRef = doc(db, 'members', currentRound.winner);
       const winnerDoc = await getDoc(winnerRef);
       if (winnerDoc.exists()) {
+        console.log('Updating points for winner:', currentRound.winner);
         await updateDoc(winnerRef, {
           totalPoints: winnerDoc.data().totalPoints + parseInt(currentRound.winnerPoints, 10),
         });
+        console.log('Winner points updated');
       }
     }
 
@@ -453,9 +363,11 @@ const handleNext = async () => {
       const discarderRef = doc(db, 'members', currentRound.discarder);
       const discarderDoc = await getDoc(discarderRef);
       if (discarderDoc.exists()) {
+        console.log('Updating points for discarder:', currentRound.discarder);
         await updateDoc(discarderRef, {
           totalPoints: discarderDoc.data().totalPoints - parseInt(currentRound.discarderPoints, 10),
         });
+        console.log('Discarder points updated');
       }
     }
 
@@ -465,6 +377,7 @@ const handleNext = async () => {
     console.error("Error saving round data: ", error);
   }
 };
+
 
 
   const handleFinish = async () => {
@@ -502,6 +415,7 @@ const handleNext = async () => {
     setIsDialogOpen(false);
     navigation.navigate('ScoreInput', {
       gameId,
+      hanchanId,
       members,
       roundSeq: currentRound.roundSeq + 1,
       animation: 'slide_from_right'

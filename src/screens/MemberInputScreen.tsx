@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet, Button, Alert, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig'; // Firebase authentication instance
 import MemberInput from '../components/MemberInput';
 
@@ -14,8 +14,12 @@ const MemberInputScreen = ({ route }) => {
 
   useEffect(() => {
     const fetchMembers = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
       const membersCollection = collection(db, 'members');
-      const membersSnapshot = await getDocs(membersCollection);
+      const q = query(membersCollection, where('createdUser', '==', currentUser.uid));
+      const membersSnapshot = await getDocs(q);
       const membersList = membersSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
       setExistingMembers(membersList);
       console.log("保存されているメンバー:", membersList);
@@ -75,7 +79,10 @@ const MemberInputScreen = ({ route }) => {
         memberIds.push(existingMember.id);
       } else {
         const newMemberRef = doc(membersCollection);
-        await setDoc(newMemberRef, { name: member });
+        await setDoc(newMemberRef, {
+          name: member,
+          createdUser: currentUser?.uid,  // currentUserのUIDをcreatedUserとして保存
+        });
         memberIds.push(newMemberRef.id);
       }
     }
@@ -83,7 +90,7 @@ const MemberInputScreen = ({ route }) => {
     const newGameRef = await addDoc(collection(db, 'games'), {
       createdAt: new Date(),
       members: memberIds,
-      createdUser: currentUser?.uid,
+      createdUser: currentUser?.uid, // ゲーム作成者としてcurrentUserのUIDを保存
     });
 
     navigation.navigate('HanchanList', { gameId: newGameRef.id });

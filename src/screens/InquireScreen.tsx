@@ -7,6 +7,8 @@ import { db, auth } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper';
 import { Image } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -32,7 +34,7 @@ const InquireScreen = () => {
         try {
             const currentUser = auth.currentUser;
             if (!currentUser) return; // ログインしていない場合は何もしない
-    
+
             const gamesCollection = collection(db, 'games');
             const gamesQuery = query(
                 gamesCollection,
@@ -42,7 +44,7 @@ const InquireScreen = () => {
                 limit(10)
             );
             const gamesSnapshot = await getDocs(gamesQuery);
-    
+
             const newGamesList = [];
             for (const gameDoc of gamesSnapshot.docs) {
                 const gameData = gameDoc.data();
@@ -52,15 +54,15 @@ const InquireScreen = () => {
                         return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
                     })
                 );
-    
+
                 const hanchanQuery = collection(db, 'games', gameDoc.id, 'hanchan');
                 const hanchanSnapshot = await getDocs(hanchanQuery);
                 const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => ({ id: hanchanDoc.id, ...hanchanDoc.data(), gameId: gameDoc.id }));
-    
+
                 // 日付をフォーマット
                 const createdAtDate = gameData.createdAt.toDate();
                 const formattedDate = `${createdAtDate.getFullYear()}/${String(createdAtDate.getMonth() + 1).padStart(2, '0')}/${String(createdAtDate.getDate()).padStart(2, '0')}`;
-    
+
                 newGamesList.push({
                     id: gameDoc.id,
                     createdAt: formattedDate,
@@ -68,7 +70,7 @@ const InquireScreen = () => {
                     hanchan: hanchanList,
                 });
             }
-    
+
             if (loadMore) {
                 // 重複をチェックしながら新しいデータを追加
                 setGames((prevGames) => [
@@ -78,7 +80,7 @@ const InquireScreen = () => {
             } else {
                 setGames(newGamesList);  // 初回またはリフレッシュ時は新しいデータでリセット
             }
-    
+
             if (!gamesSnapshot.empty) {
                 setLastVisible(gamesSnapshot.docs[gamesSnapshot.docs.length - 1]);
             }
@@ -103,8 +105,14 @@ const InquireScreen = () => {
             headerTintColor: '#000',
             headerTitle: '戦績照会',
             headerTitleAlign: 'center',
+            headerRight: () => (
+                <TouchableOpacity onPress={onRefresh}>
+                    <MaterialCommunityIcons name="reload" size={24} color="#000" />
+                </TouchableOpacity>
+            ),
         });
     }, [navigation]);
+
 
     const handleLoadMore = () => {
         if (!isFetchingMore) {

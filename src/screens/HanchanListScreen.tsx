@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image  } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert  } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, doc, getDoc, addDoc, deleteDoc} from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc, deleteDoc, where } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const HanchanListScreen = ({ route }) => {
   const { gameId } = route.params;
@@ -13,6 +14,7 @@ const HanchanListScreen = ({ route }) => {
   const [createdAt, setCreatedAt] = useState(null);
   const [hanchans, setHanchans] = useState([]);
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
 
   const imagePaths = [
     require('../image/sou_1.png'),
@@ -33,7 +35,12 @@ const HanchanListScreen = ({ route }) => {
       },
       headerTintColor: '#000',
       headerTitle: '全半壮照会',
-      headerTitleAlign: 'center', 
+      headerTitleAlign: 'center',
+    //   headerRight: () => (
+    //     <TouchableOpacity onPress={fetchData}>
+    //         <MaterialCommunityIcons name="reload" size={24} color="#000" />
+    //     </TouchableOpacity>
+    // ),
     });
   }, [navigation]);
 
@@ -72,22 +79,77 @@ const HanchanListScreen = ({ route }) => {
     fetchGameData();
   }, [gameId, route]);
 
+  const fetchData = async () => {
+    try {
+        const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
+        const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
+
+        const hanchanList = await Promise.all(hanchanSnapshot.docs.map(async hanchanDoc => {
+            const hanchanData = hanchanDoc.data();
+
+            // membersの詳細情報を再取得
+            const members = await Promise.all(
+                (hanchanData.members || []).map(async memberId => {
+                    const memberDoc = await getDoc(doc(db, 'members', memberId));
+                    return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
+                })
+            );
+
+            return {
+                id: hanchanDoc.id,
+                ...hanchanData,
+                members // 再取得したmembersを含める
+            };
+        }));
+
+        setHanchans(hanchanList);
+        console.log("Hanchan List:", hanchanList);
+    } catch (error) {
+        console.error('Error fetching hanchan data:', error);
+    } finally {
+        setLoading(false);
+    }
+};
+
   const handleAddRound = async () => {
     try {
       const newHanchanRef = await addDoc(collection(db, 'games', gameId, 'hanchan'), {
         createdAt: new Date(),
         members: [], // メンバーの初期値（必要に応じて設定）
       });
-      console.log("New Hanchan created with ID(fetchHanchan):", newHanchanRef.id, "at", new Date().toLocaleString());
+      // console.log("New Hanchan created with ID(fetchHanchan):", newHanchanRef.id, "at", new Date().toLocaleString());
       navigation.navigate('ScoreInput', { gameId, hanchanId: newHanchanRef.id });
     } catch (error) {
       console.error('Error creating new hanchan:', error);
     }
   };
 
+  // const handleHanchanPress = (hanchan) => {
+  //   navigation.navigate('GameDetails', { hanchan });
+  // };
   const handleHanchanPress = (hanchan) => {
-    navigation.navigate('GameDetails', { hanchan });
-  };
+    try {
+        console.log("hanchanListScreen hanchan:", hanchan);
+        // hanchanオブジェクトとそのプロパティが存在するか確認
+        if (!hanchan || !hanchan.createdAt) {
+            throw new Error("Invalid hanchan data");
+        }
+        // 防御的なチェック：membersが配列であるか確認
+        if (!Array.isArray(hanchan.members)) {
+          throw new Error("Invalid members data");
+      }
+      const safeHanchan = {
+        ...hanchan,
+        members: hanchan.members || [],  // membersが存在しない場合、空配列を設定
+    };
+      console.log("safeHanchan object to be passed:", safeHanchan);
+
+      navigation.navigate('GameDetails', { hanchan: safeHanchan });
+    } catch (error) {
+        console.error('Error fetching hanchan details:', error);
+        Alert.alert("エラー", "半荘データの取得に失敗しました。");
+    }
+};
 
   const onDelete = async (hanchanId) => {
     try {

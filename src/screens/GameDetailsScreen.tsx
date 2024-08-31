@@ -9,6 +9,8 @@ import { RootStackParamList } from '../navigationTypes';
 import { FAB } from 'react-native-paper';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Icon from 'react-native-vector-icons/Feather';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
 
 type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
 
@@ -18,68 +20,167 @@ const GameDetailsScreen: React.FC = () => {
   const route = useRoute<GameDetailsScreenRouteProp>();
   const { hanchan } = route.params;
   const [hanchanDetails, setHanchanDetails] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [gameDetails, setGameDetails] = useState<any>(null);
+  const [hanchanList, setHanchanList] = useState<any[]>([]);
 
   const imagePaths = [
-    require('../image/pin_1.png'),
-    require('../image/pin_2.png'),
-    require('../image/pin_3.png'),
-    require('../image/pin_4.png'),
-    require('../image/pin_5.jpg'),
-    require('../image/pin_6.png'),
-    require('../image/pin_7.png'),
-    require('../image/pin_8.png'),
-    require('../image/pin_9.png'),
+    require('../image/man_1.png'),
+    require('../image/man_2.png'),
+    require('../image/man_3.png'),
+    require('../image/man_4.png'),
+    require('../image/man_5.png'),
+    require('../image/man_6.png'),
+    require('../image/man_7.jpg'),
+    require('../image/man_8.png'),
+    require('../image/man_9.png'),
 ];
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: '半壮詳細',
       headerTitleAlign: 'center',
+      // headerRight: () => (
+      //   <TouchableOpacity onPress={fetchGameDetails}>
+      //       <MaterialCommunityIcons name="reload" size={24} color="#000" />
+      //   </TouchableOpacity>
+      // ),
     });
   }, [navigation]);
 
+  //デバッグ用
   useEffect(() => {
-    const fetchHanchanDetails = async () => {
-      try {
-        const db = getFirestore();
-        const roundsCollection = collection(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds');
-        const roundsSnapshot = await getDocs(roundsCollection);
+    console.log("GameDetails screen received hanchan:", hanchan);
+}, [hanchan]);
+//デバッグ用
+useEffect(() => {
+    if (hanchan.members && hanchan.members.length > 0) {
+        console.log("Members array in hanchan:", hanchan.members);
+        console.log("First member:", hanchan.members[0]);
+    } else {
+        console.log("Members array is undefined or empty.");
+    }
+}, [hanchan]);
 
-        if (roundsSnapshot.empty) {
-          setHanchanDetails([{ ...hanchan, rounds: [] }]);
-          return;
-        }
+  useEffect(() => {
+    // const fetchHanchanDetails = async () => {
+    //   try {
+    //     const db = getFirestore();
+    //     const roundsCollection = collection(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds');
+    //     const roundsSnapshot = await getDocs(roundsCollection);
 
-        const rounds = roundsSnapshot.docs.map((roundDoc) => {
-          const round = roundDoc.data();
-          const winnerName = round.winner || '流局';  // `winner` が存在すればそのまま使用、なければ "流局" と表示
-          const discarderName = round.discarder || 'ツモ';  // `discarder` が存在すればそのまま使用、なければ "ツモ" と表示
-          const winnerPoints = round.winnerPoints ? `打点: ${round.winnerPoints}` : '';  // `winnerPoints` が存在すれば表示
-          console.log("あがった人:", winnerName);
-          console.log("打点:", winnerPoints);
-          return { id: roundDoc.id, ...round, winnerName, discarderName, winnerPoints };
-        });
+    //     if (roundsSnapshot.empty) {
+    //       setHanchanDetails([{ ...hanchan, rounds: [] }]);
+    //       return;
+    //     }
 
-        // Sort rounds
-        const sortedRounds = rounds.sort((a, b) => {
-          const placeOrder = { '東': 1, '南': 2, '西': 3, '北': 4 };
-          if (placeOrder[a.roundNumber.place] !== placeOrder[b.roundNumber.place]) {
-            return placeOrder[a.roundNumber.place] - placeOrder[b.roundNumber.place];
-          }
-          if (a.roundNumber.round !== b.roundNumber.round) {
-            return a.roundNumber.round - b.roundNumber.round;
-          }
-          return a.roundNumber.honba - b.roundNumber.honba;
-        });
+    //     const rounds = roundsSnapshot.docs.map((roundDoc) => {
+    //       const round = roundDoc.data();
+    //       const winnerName = round.winner || '流局';  // `winner` が存在すればそのまま使用、なければ "流局" と表示
+    //       const discarderName = round.discarder || 'ツモ';  // `discarder` が存在すればそのまま使用、なければ "ツモ" と表示
+    //       const winnerPoints = round.winnerPoints ? `打点: ${round.winnerPoints}` : '';  // `winnerPoints` が存在すれば表示
+    //       console.log("あがった人:", winnerName);
+    //       console.log("打点:", winnerPoints);
+    //       return { id: roundDoc.id, ...round, winnerName, discarderName, winnerPoints };
+    //     });
 
-        setHanchanDetails([{ ...hanchan, rounds: sortedRounds }]);
-      } catch (error) {
-        console.error('Error fetching hanchan details:', error);
-      }
-    };
+    //     // Sort rounds
+    //     const sortedRounds = rounds.sort((a, b) => {
+    //       const placeOrder = { '東': 1, '南': 2, '西': 3, '北': 4 };
+    //       if (placeOrder[a.roundNumber.place] !== placeOrder[b.roundNumber.place]) {
+    //         return placeOrder[a.roundNumber.place] - placeOrder[b.roundNumber.place];
+    //       }
+    //       if (a.roundNumber.round !== b.roundNumber.round) {
+    //         return a.roundNumber.round - b.roundNumber.round;
+    //       }
+    //       return a.roundNumber.honba - b.roundNumber.honba;
+    //     });
+
+    //     setHanchanDetails([{ ...hanchan, rounds: sortedRounds }]);
+    //   } catch (error) {
+    //     console.error('Error fetching hanchan details:', error);
+    //   }
+    // };
 
     fetchHanchanDetails();
   }, [hanchan]);
+
+  const fetchHanchanDetails = async () => {
+    try {
+      const roundsCollection = collection(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds');
+      const roundsSnapshot = await getDocs(roundsCollection);
+
+      if (roundsSnapshot.empty) {
+        setHanchanDetails([{ ...hanchan, rounds: [] }]);
+        return;
+      }
+
+      const rounds = roundsSnapshot.docs.map((roundDoc) => {
+        const round = roundDoc.data();
+        const winnerName = round.winner || '流局';
+        const discarderName = round.discarder || 'ツモ';
+        const winnerPoints = round.winnerPoints ? `打点: ${round.winnerPoints}` : '';
+        return { id: roundDoc.id, ...round, winnerName, discarderName, winnerPoints };
+      });
+
+      const sortedRounds = rounds.sort((a, b) => {
+        const placeOrder = { '東': 1, '南': 2, '西': 3, '北': 4 };
+        if (placeOrder[a.roundNumber.place] !== placeOrder[b.roundNumber.place]) {
+          return placeOrder[a.roundNumber.place] - placeOrder[b.roundNumber.place];
+        }
+        if (a.roundNumber.round !== b.roundNumber.round) {
+          return a.roundNumber.round - b.roundNumber.round;
+        }
+        return a.roundNumber.honba - b.roundNumber.honba;
+      });
+
+      setHanchanDetails([{ ...hanchan, rounds: sortedRounds }]);
+    } catch (error) {
+      console.error('Error fetching hanchan details:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchHanchanDetails();
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchHanchanDetails(); // フォーカスされたときにデータを再取得
+    });
+
+    return unsubscribe;
+  }, [navigation, hanchan]);
+
+  const fetchGameDetails = async () => {
+    try {
+        setLoading(true);
+
+        const gameDoc = await getDoc(doc(db, 'games', hanchan.gameId));
+        if (!gameDoc.exists()) {
+            console.error("No such game!");
+            return;
+        }
+
+        const gameData = gameDoc.data();
+        setGameDetails(gameData);
+
+        const hanchanCollection = collection(db, 'games', hanchan.gameId, 'hanchan');
+        const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
+
+        const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => ({
+            id: hanchanDoc.id,
+            ...hanchanDoc.data(),
+        }));
+        setHanchanList(hanchanList);
+
+        console.log("Game Details:", gameData);
+        console.log("Hanchan List:", hanchanList);
+
+    } catch (error) {
+        console.error('Error fetching game details:', error);
+    } finally {
+        setLoading(false);
+    }
+};
 
   const handleAddRound = async () => {
     try {
@@ -161,6 +262,18 @@ const GameDetailsScreen: React.FC = () => {
       </View>
     );
   }
+
+  // メンバーが存在しない場合の処理
+  // if (!hanchan.members || hanchan.members.length === 0) {
+  //   return (
+  //       <View style={styles.container}>
+  //           <Text style={styles.title}>Game Details</Text>
+  //           <Text>Hanchan ID: {hanchan.id}</Text>
+  //           <Text>Created At: {new Date(hanchan.createdAt.seconds * 1000).toLocaleString()}</Text>
+  //           <Text>メンバーが存在しません。</Text>
+  //       </View>
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
@@ -325,6 +438,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     alignSelf: 'stretch', // 親要素に高さを合わせる
+},
+title: {
+  fontSize: 24,
+  fontWeight: 'bold',
 },
 });
 

@@ -20,6 +20,7 @@ import InquiryScreen from './src/screens/InquiryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AppInfoScreen from './src/screens/AppInfoScreen';
 import NoticeScreen from './src/screens/NoticeScreen';
+import MemberManagementScreen from './src/screens/MemberManagementScreen';
 import TestScreen from './src/screens/TestScreen';
 
 const Stack = createStackNavigator();
@@ -80,6 +81,7 @@ function MenuStackNavigator() {
         <Stack.Screen name="Notice" component={NoticeScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="AppInfo" component={AppInfoScreen} />
+        <Stack.Screen name="MemberManagement" component={MemberManagementScreen} />
       </Stack.Navigator>
   );
 }
