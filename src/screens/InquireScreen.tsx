@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
-import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, Timestamp, addDoc, deleteDoc, where } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, deleteDoc, where } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper';
 import { Image } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
+import ContentLoader, { Rect } from 'react-content-loader/native'; // スケルトンUI用のライブラリ
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -33,12 +33,12 @@ const InquireScreen = () => {
     const fetchData = async (loadMore = false) => {
         try {
             const currentUser = auth.currentUser;
-            if (!currentUser) return; // ログインしていない場合は何もしない
+            if (!currentUser) return;
 
             const gamesCollection = collection(db, 'games');
             const gamesQuery = query(
                 gamesCollection,
-                where('createdUser', '==', currentUser.uid), // createdUser とログインしているユーザーを一致させる
+                where('createdUser', '==', currentUser.uid),
                 orderBy('createdAt', 'desc'),
                 ...(lastVisible && loadMore ? [startAfter(lastVisible)] : []),
                 limit(10)
@@ -59,7 +59,6 @@ const InquireScreen = () => {
                 const hanchanSnapshot = await getDocs(hanchanQuery);
                 const hanchanList = hanchanSnapshot.docs.map(hanchanDoc => ({ id: hanchanDoc.id, ...hanchanDoc.data(), gameId: gameDoc.id }));
 
-                // 日付をフォーマット
                 const createdAtDate = gameData.createdAt.toDate();
                 const formattedDate = `${createdAtDate.getFullYear()}/${String(createdAtDate.getMonth() + 1).padStart(2, '0')}/${String(createdAtDate.getDate()).padStart(2, '0')}`;
 
@@ -72,13 +71,12 @@ const InquireScreen = () => {
             }
 
             if (loadMore) {
-                // 重複をチェックしながら新しいデータを追加
                 setGames((prevGames) => [
                     ...prevGames,
                     ...newGamesList.filter(newGame => !prevGames.some(game => game.id === newGame.id))
                 ]);
             } else {
-                setGames(newGamesList);  // 初回またはリフレッシュ時は新しいデータでリセット
+                setGames(newGamesList);
             }
 
             if (!gamesSnapshot.empty) {
@@ -97,6 +95,13 @@ const InquireScreen = () => {
         fetchData();
     }, []);
 
+    useFocusEffect(
+        React.useCallback(() => {
+            setLoading(true);
+            fetchData();
+        }, [])
+    );
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerStyle: {
@@ -112,7 +117,6 @@ const InquireScreen = () => {
             ),
         });
     }, [navigation]);
-
 
     const handleLoadMore = () => {
         if (!isFetchingMore) {
@@ -132,7 +136,6 @@ const InquireScreen = () => {
     };
 
     const handleAddGame = () => {
-        // メンバー入力画面にナビゲートする
         navigation.navigate('MemberInput');
     };
 
@@ -162,15 +165,6 @@ const InquireScreen = () => {
         );
     };
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" />
-                <Text>Loading...</Text>
-            </View>
-        );
-    }
-
     return (
         <View style={styles.container}>
             <ScrollView
@@ -184,14 +178,30 @@ const InquireScreen = () => {
                 scrollEventThrottle={400}
             >
                 <View style={styles.innerContainer}>
-                    {games.length === 0 ? (
+                    {loading ? (
+                        <>
+                            {[1, 2, 3].map((_, index) => (
+                                <ContentLoader 
+                                    key={index}
+                                    speed={2}
+                                    width={400}
+                                    height={70}
+                                    viewBox="0 0 400 70"
+                                    backgroundColor="#f3f3f3"
+                                    foregroundColor="#ecebeb"
+                                >
+                                    <Rect x="0" y="0" rx="4" ry="4" width="70" height="70" />
+                                    <Rect x="90" y="20" rx="4" ry="4" width="250" height="10" />
+                                </ContentLoader>
+                            ))}
+                        </>
+                    ) : games.length === 0 ? (
                         <View style={styles.noDataContainer}>
                             <Text style={styles.noDataText}>データがありません</Text>
                         </View>
                     ) : (
                         games.map((game, index) => (
                             <Swipeable
-                                // key={`${game.id}-${index}`}
                                 key={game.id}
                                 renderRightActions={() => (
                                     <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(game.id)}>
@@ -201,7 +211,7 @@ const InquireScreen = () => {
                             >
                                 <TouchableOpacity key={game.id} style={styles.gameBox} onPress={() => handlePress(game)}>
                                     <Image
-                                        source={imagePaths[index % imagePaths.length]} // インデックスに基づいて画像を選択
+                                        source={imagePaths[index % imagePaths.length]}
                                         style={styles.imageStyle}
                                     />
                                     <View style={styles.textContainer}>
@@ -221,8 +231,17 @@ const InquireScreen = () => {
                     )}
                     {isFetchingMore && (
                         <View style={styles.loadingMoreContainer}>
-                            <ActivityIndicator size="large" />
-                            <Text>Loading more...</Text>
+                            <ContentLoader 
+                                speed={2}
+                                width={400}
+                                height={70}
+                                viewBox="0 0 400 70"
+                                backgroundColor="#f3f3f3"
+                                foregroundColor="#ecebeb"
+                            >
+                                <Rect x="0" y="0" rx="4" ry="4" width="70" height="70" />
+                                <Rect x="90" y="20" rx="4" ry="4" width="250" height="10" />
+                            </ContentLoader>
                         </View>
                     )}
                 </View>
@@ -295,8 +314,8 @@ const styles = StyleSheet.create({
     getDateText: {
         fontSize: 17,
         lineHeight: 24,
-        textAlign: 'left', // 配置する位置
-        marginLeft: 0,     // 必要に応じて余白を調整
+        textAlign: 'left',
+        marginLeft: 0,
         fontWeight: 'bold',
     },
     getStartedText: {
@@ -306,7 +325,6 @@ const styles = StyleSheet.create({
     },
     membersContainer: {
         flexDirection: 'row',
-        // justifyContent: 'space-around',
         justifyContent: 'space-between',
         marginTop: 10,
     },
@@ -326,22 +344,22 @@ const styles = StyleSheet.create({
         bottom: 0,
     },
     imageStyle: {
-        width: 60,              // 画像の幅
-        height: 70,             // 画像の高さ
-        marginRight: 10,        // テキストとの間隔を設定
+        width: 60,
+        height: 70,
+        marginRight: 10,
     },
     textContainer: {
-        flex: 1, // 画像の右側に配置されるコンテンツに柔軟な幅を確保
-        justifyContent: 'center', // テキストコンテンツの縦方向の中央揃え
+        flex: 1,
+        justifyContent: 'center',
     },
     deleteButton: {
         backgroundColor: 'red',
-        justifyContent: 'center', // 垂直方向の中央に配置
-        alignItems: 'center',    // 水平方向の中央に配置
+        justifyContent: 'center',
+        alignItems: 'center',
         width: 70,
         borderRadius: 8,
         marginBottom: 16,
-        alignSelf: 'stretch', // 親要素に高さを合わせる
+        alignSelf: 'stretch',
     },
 });
 

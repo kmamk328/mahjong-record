@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import ContentLoader, { Rect } from 'react-content-loader/native';
 import { db, auth } from '../../firebaseConfig';
@@ -13,7 +13,7 @@ const DashboardScreen = () => {
     const [selectedMemberName, setSelectedMemberName] = useState('');
     const [members, setMembers] = useState([]); // 全メンバーを保存
     const [modalVisible, setModalVisible] = useState(false);
-    const [loading, setLoading] = useState(true); // スケルトンUI表示のためのローディング状態
+    const [loading, setLoading] = useState(false); // デフォルトはfalse、ロード中のみtrueにする
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -26,31 +26,36 @@ const DashboardScreen = () => {
         });
     }, [navigation]);
 
-    // Firebaseからメンバーを取得する
-    useEffect(() => {
-        const fetchMembers = async () => {
-            try {
-                const currentUser = auth.currentUser;
-                if (!currentUser) return;
+    const fetchMembers = async () => {
+        try {
+            const currentUser = auth.currentUser;
+            console.log('DashBoardScreen currentUser: ', currentUser);
+            if (!currentUser) return;
 
-                const membersCollection = collection(db, 'members');
-                const membersQuery = query(
-                    membersCollection,
-                    where('createdUser', '==', currentUser.uid) // 現在のユーザーが作成したメンバーのみを取得
-                );
-                const membersSnapshot = await getDocs(membersQuery);
-                const membersList = membersSnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    name: doc.data().name,
-                }));
-                setMembers(membersList);
-            } catch (error) {
-                console.error('Error fetching members: ', error);
-            }
-        };
+            const membersCollection = collection(db, 'members');
+            const membersQuery = query(
+                membersCollection,
+                // 端末ごとの制御になっているので
+                // 現在のユーザーが作成したメンバーのみを取得
+                where('createdUser', '==', currentUser.uid)
+            );
+            const membersSnapshot = await getDocs(membersQuery);
+            const membersList = membersSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                name: doc.data().name,
+            }));
+            console.log('DashBoardScreen membersList: ', membersList);
+            setMembers(membersList);
+        } catch (error) {
+            console.error('Error fetching members: ', error);
+        }
+    };
 
-        fetchMembers();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchMembers();
+        }, [])
+    );
 
     useEffect(() => {
         const fetchData = async () => {
@@ -60,14 +65,12 @@ const DashboardScreen = () => {
             }
 
             try {
-                setLoading(true); // データ取得中はローディング状態に
+                setLoading(true); // メンバー選択後のロード中はtrueに設定
 
                 const currentUser = auth.currentUser;
-                // 選択されたメンバーの名前を取得する
                 const selectedMemberDoc = await getDoc(doc(db, 'members', selectedMember));
                 const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
                 setSelectedMemberName(memberName);
-
 
                 const gamesQuery = query(
                     collection(db, 'games'),
@@ -77,7 +80,7 @@ const DashboardScreen = () => {
                     limit(5)
                 );
 
-            const gamesSnapshot = await getDocs(gamesQuery);
+                const gamesSnapshot = await getDocs(gamesQuery);
 
                 if (gamesSnapshot.empty) {
                     setYourStats([]);
@@ -90,7 +93,6 @@ const DashboardScreen = () => {
                     const gameId = gameDoc.id;
                     const gameData = gameDoc.data();
 
-                    // ゲームの日時をフォーマットして取得
                     const gameDate = gameData.createdAt.toDate().toLocaleDateString('ja-JP', {
                         year: 'numeric',
                         month: '2-digit',
@@ -105,7 +107,7 @@ const DashboardScreen = () => {
                         reachWinCount: 0,
                         nakiWinCount: 0,
                         maxWinPoints: 0,
-                        maxWinPointsDisplay: '', // 表示用の元の値を保持する
+                        maxWinPointsDisplay: '',
                         roles: {}
                     };
                     const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
@@ -118,24 +120,16 @@ const DashboardScreen = () => {
 
                         roundsSnapshot.forEach((roundDoc) => {
                             const round = roundDoc.data();
-                            console.log("round.winner: ", round.winner);
-                            console.log("selectedMemberName: ", selectedMemberName);
                             if (round.winner === selectedMemberName) {
                                 gameStats.winCount += 1;
                                 if (round.reach) gameStats.reachWinCount += 1;
                                 if (round.naki) gameStats.nakiWinCount += 1;
 
                                 const numericWinnerPoints = convertWinnerPoints(round);
-                                console.log("gameStats.maxWinPoints: ", gameStats.maxWinPoints);
-                                console.log("numericWinnerPoints: ", numericWinnerPoints);
-
                                 if (numericWinnerPoints > gameStats.maxWinPoints) {
                                     gameStats.maxWinPoints = round.winnerPoints;
-                                    console.log("11111gameStats.maxWinPoints: ", gameStats.maxWinPoints);
-                                    console.log("11111ound.winnerPoints: ", round.winnerPoints);
                                 }
 
-                                //役一覧用
                                 round.selectedRoles?.forEach((role) => {
                                     if (gameStats.roles[role]) {
                                         gameStats.roles[role] += 1;
@@ -162,47 +156,37 @@ const DashboardScreen = () => {
         };
 
         fetchData();
-    }, [selectedMember,selectedMemberName]);
+    }, [selectedMember, selectedMemberName]);
 
-    // const handlePickerSelect = (value) => {
-    //     setSelectedMember(value);
-    //     setModalVisible(false); // モーダルを閉じる
-    // };
     const handlePickerSelect = async (value) => {
         try {
-            // 選択されたメンバーの名前を取得する
             const selectedMemberDoc = await getDoc(doc(db, 'members', value));
             const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
-            setSelectedMember(value);  // メンバーのIDを保存
-            setSelectedMemberName(memberName);  // メンバーの名前を保存
+            setSelectedMember(value);
+            setSelectedMemberName(memberName);
 
             console.log('Selected Member ID:', value);
             console.log('Selected Member Name:', memberName);
 
-            setModalVisible(false); // モーダルを閉じる
+            setModalVisible(false);
         } catch (error) {
             console.error('Error fetching selected member name: ', error);
         }
     };
 
     function convertWinnerPoints(round) {
-        console.log("function round.winnerPoints: ", round.winnerPoints);
         if (!round.winnerPoints) {
-            return 0; // または適切なデフォルト値を返す
+            return 0;
         }
         let winnerPoints = round.winnerPoints;
-        console.log("function winnerPoints: ", winnerPoints);
         if (winnerPoints.includes('オール')) {
-            // "500オール" 形式の場合
             const points = parseInt(winnerPoints.replace('オール', ''), 10);
             return points * 3;
         } else if (winnerPoints.includes('子(') && winnerPoints.includes('親(')) {
-            // "子(300) 親(500)" 形式の場合
             const childPoints = parseInt(winnerPoints.match(/子\((\d+)\)/)[1], 10);
             const parentPoints = parseInt(winnerPoints.match(/親\((\d+)\)/)[1], 10);
             return childPoints * 2 + parentPoints;
         } else {
-            // その他の形式の場合（数値だけを抽出）
             return parseInt(winnerPoints, 10);
         }
     }
@@ -224,57 +208,67 @@ const DashboardScreen = () => {
                     </View>
                 </View>
                 <View style={styles.summaryContainer}>
-                    {yourStats.length > 0 ? (
-                        yourStats.map((stats, index) => (
-                            <View key={index} style={styles.summaryBox}>
-                                <View style={styles.dateContainer}>
-                                    <Text style={styles.getDateText}>
-                                        {stats.gameDate}
-                                    </Text>
-                                </View>
-                                {/* <Text style={styles.summaryText}>
-                                    Game ID: {stats.gameId}
-                                </Text> */}
-                                {/* <Text style={styles.getDateText}>
-                                    {stats.gameDate}
-                                </Text> */}
-                                <Text style={styles.summaryText}>
-                                    あがり回数　: {stats.winCount}
-                                </Text>
-                                <Text style={styles.discardText}>
-                                    放銃回数　　: {stats.discardCount}
-                                </Text>
-                                <Text style={styles.otherText}>
-                                    リーチあがり回数　: {stats.reachWinCount}
-                                </Text>
-                                <Text style={styles.otherText}>
-                                    鳴きあがり回数　　: {stats.nakiWinCount}
-                                </Text>
-                                <Text style={styles.otherText}>
-                                    最高打点: {stats.maxWinPoints}
-                                </Text>
-                                {/* <Text style={styles.summaryText}>
-                                    役の集計:
-                                </Text> */}
-                                {Object.entries(stats.roles).map(([role, count]) => (
-                                    <Text key={role} style={styles.summaryValue}>{role}: {count} 回</Text>
-                                ))}
-                            </View>
-                        ))
+                    {loading ? (
+                        <>
+                            {[1, 2, 3].map((_, index) => (
+                                <ContentLoader 
+                                    key={index}
+                                    speed={2}
+                                    width={400}
+                                    height={70}
+                                    viewBox="0 0 400 70"
+                                    backgroundColor="#f3f3f3"
+                                    foregroundColor="#ecebeb"
+                                >
+                                    <Rect x="0" y="0" rx="4" ry="4" width="70" height="70" />
+                                    <Rect x="80" y="17" rx="4" ry="4" width="300" height="10" />
+                                    <Rect x="80" y="37" rx="4" ry="4" width="250" height="10" />
+                                </ContentLoader>
+                            ))}
+                        </>
                     ) : (
-                        <View style={styles.summaryBox}>
-                            <View style={styles.dateContainer}>
+                        yourStats.length > 0 ? (
+                            yourStats.map((stats, index) => (
+                                <View key={index} style={styles.summaryBox}>
+                                    <View style={styles.dateContainer}>
+                                        <Text style={styles.getDateText}>
+                                            {stats.gameDate}
+                                        </Text>
+                                    </View>
+                                    <Text style={styles.summaryText}>
+                                        あがり回数　: {stats.winCount}
+                                    </Text>
+                                    <Text style={styles.discardText}>
+                                        放銃回数　　: {stats.discardCount}
+                                    </Text>
+                                    <Text style={styles.otherText}>
+                                        リーチあがり回数　: {stats.reachWinCount}
+                                    </Text>
+                                    <Text style={styles.otherText}>
+                                        鳴きあがり回数　　: {stats.nakiWinCount}
+                                    </Text>
+                                    <Text style={styles.otherText}>
+                                        最高打点: {stats.maxWinPoints}
+                                    </Text>
+                                    {Object.entries(stats.roles).map(([role, count]) => (
+                                        <Text key={role} style={styles.summaryValue}>{role}: {count} 回</Text>
+                                    ))}
+                                </View>
+                            ))
+                        ) : (
+                            <View style={styles.summaryBox}>
+                                <View style={styles.dateContainer}>
                                     <Text style={styles.getDateText}>
                                     日ごとの成績を表示します
                                     </Text>
                                 </View>
-                            {/* <Text style={styles.getDateText}>日ごとの成績を表示します</Text> */}
-                            <Text style={styles.summaryText}>あがり回数: 0</Text>
-                            <Text style={styles.discardText}>放銃回数: 0</Text>
-                            <Text style={styles.otherText}>リーチあがり回数: 0</Text>
-                            <Text style={styles.otherText}>鳴きあがり回数: 0</Text>
-                            <Text style={styles.otherText}>最高打点: 0</Text>
-                        </View>
+                                <Text style={styles.summaryText}>あがり回数: 0</Text>
+                                <Text style={styles.discardText}>放銃回数: 0</Text>
+                                <Text style={styles.otherText}>リーチあがり回数: 0</Text>
+                                <Text style={styles.otherText}>鳴きあがり回数: 0</Text>
+                                <Text style={styles.otherText}>最高打点: 0</Text>
+                            </View>
+                        )
                     )}
                 </View>
             </ScrollView>
@@ -328,7 +322,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginRight: 10, // テキストとピッカーの間の余白
+        marginRight: 10,
         marginLeft: 20,
     },
     pickerButton: {
@@ -365,19 +359,16 @@ const styles = StyleSheet.create({
     },
     summaryText: {
         fontSize: 16,
-        // fontWeight: 'bold',
         marginVertical: 5,
         color: 'blue',
     },
     discardText: {
         fontSize: 16,
-        // fontWeight: 'bold',
         marginVertical: 5,
         color: 'red',
     },
     otherText: {
         fontSize: 16,
-        // fontWeight: 'bold',
         marginVertical: 5,
         color: 'black',
     },
@@ -387,16 +378,16 @@ const styles = StyleSheet.create({
         color: 'blue',
     },
     dateContainer: {
-        backgroundColor: '#32CD32',  // 背景色を緑に設定
-        padding: 5,               // 内側の余白
-        borderRadius: 5,           // 角を丸める
-        marginBottom: 10,          // 下部の余白
-        alignItems: 'center',      // 中央揃え
+        backgroundColor: '#32CD32',
+        padding: 5,
+        borderRadius: 5,
+        marginBottom: 10,
+        alignItems: 'center',
     },
     getDateText: {
         fontSize: 20,
         lineHeight: 24,
-        marginLeft: 0,     // 必要に応じて余白を調整
+        marginLeft: 0,
         fontWeight: 'bold',
         color: 'white',
     },

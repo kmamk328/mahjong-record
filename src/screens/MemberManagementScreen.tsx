@@ -1,12 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Icon from 'react-native-vector-icons/Feather';
 import { getFirestore, collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 
 const MemberManagementScreen = () => {
+    const navigation = useNavigation();
     const [members, setMembers] = useState([]);
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerStyle: {
+                backgroundColor: '#FFFFFF',
+            },
+            headerTintColor: '#000',
+            headerTitle: 'メンバー管理',
+            headerTitleAlign: 'center',
+        });
+    }, [navigation]);
 
     useEffect(() => {
         const fetchMembers = async () => {
