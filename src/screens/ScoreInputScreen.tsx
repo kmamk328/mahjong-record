@@ -316,6 +316,11 @@ const ScoreInputScreen = () => {
             uraDora: roundData.uraDora || 0,
             roundSeq: roundData.roundSeq || 0,
         });
+
+      // 渡されたwinnersの情報がある場合、その数に応じてwinnersをセット
+      if (roundData.winners && Array.isArray(roundData.winners)) {
+        setWinners(roundData.winners);
+      }
     }
 }, [roundData]);
 
@@ -339,6 +344,7 @@ const handleNext = async () => {
         roles: selectedRoles,
         roundSeq,
         tenpaiPlayers,
+        winners,
         // createdUser: currentUser,
       });
       console.log('Round updated successfully');
@@ -360,6 +366,7 @@ const handleNext = async () => {
         isOya: currentRound.isOya,
         roundSeq,
         tenpaiPlayers,
+        winners,
         // createdUser: currentUser,
       });
       console.log("New Round created with ID:", newRoundRef.id, "at", new Date().toLocaleString());
@@ -429,6 +436,27 @@ const handleNext = async () => {
 
   const clearAllRolesSelection = () => {
     setSelectedRoles([]);
+  };
+
+  const handleOyaSwitch = (value, index) => {
+    const updatedWinners = [...winners];
+    updatedWinners[index].isOya = value;
+    setWinners(updatedWinners);
+  
+    // 親の状態が変わったらポイントの選択肢を更新
+    setCurrentRound({ ...currentRound, isOya: value });
+    updateAvailablePoints();
+  };
+  
+  // ツモスイッチの変更をハンドリングする関数
+  const handleTsumoSwitch = (value, index) => {
+    const updatedWinners = [...winners];
+    updatedWinners[index].isTsumo = value;
+    setWinners(updatedWinners);
+  
+    // ツモの状態が変わったらポイントの選択肢を更新
+    setCurrentRound({ ...currentRound, isTsumo: value });
+    updateAvailablePoints();
   };
 
   const handleDialogClose = () => {
@@ -654,12 +682,13 @@ const handleNext = async () => {
                   <Text style={styles.discarderLabel}>親：</Text>
                   <Switch
                     value={winner.isOya}
-                    onValueChange={() => handleWinnerPickerChange(!winner.isOya, index, 'isOya')}
+                    // onValueChange={() => handleWinnerPickerChange(!winner.isOya, index, 'isOya')}
+                    onValueChange={(value) => handleOyaSwitch(value, index)}
                   />
                   <Text style={styles.discarderLabel}>リーチ：</Text>
                   <Switch
                     value={winner.isReach}
-                    onValueChange={() => handleWinnerPickerChange(!winner.isReach, index, 'isReach')}
+                    onValueChange={(value) => handleSwitchChange('isReach', value, index)}
                   />
                 </View>
 
@@ -667,12 +696,13 @@ const handleNext = async () => {
                   <Text style={styles.discarderLabel}>ツモ：</Text>
                   <Switch
                     value={winner.isTsumo}
-                    onValueChange={() => handleWinnerPickerChange(!winner.isTsumo, index, 'isTsumo')}
+                    // onValueChange={(value) => handleSwitchChange('isTsumo', value, index)}
+                    onValueChange={(value) => handleTsumoSwitch(value, index)}
                   />
                   <Text style={styles.discarderLabel}>鳴き：</Text>
                   <Switch
                     value={winner.isNaki}
-                    onValueChange={() => handleWinnerPickerChange(!winner.isNaki, index, 'isNaki')}
+                    onValueChange={(value) => handleSwitchChange('isNaki', value, index)}
                   />
                 </View>
 

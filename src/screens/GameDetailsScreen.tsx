@@ -117,10 +117,19 @@ useEffect(() => {
 
       const rounds = roundsSnapshot.docs.map((roundDoc) => {
         const round = roundDoc.data();
-        const winnerName = round.winner || '流局';
-        const discarderName = round.discarder || 'ツモ';
-        const winnerPoints = round.winnerPoints ? `打点: ${round.winnerPoints}` : '';
-        return { id: roundDoc.id, ...round, winnerName, discarderName, winnerPoints };
+        const winnerNames = round.winners ? round.winners.map((winner) => winner.winner).join(', ') : '流局';
+        console.log("round:", round);
+        console.log("round.winneraaa:", round.winner);
+        console.log("round.winners:", round.winners);
+        console.log("winnerNames:", winnerNames);
+
+        const winnerPoints = round.winners
+          ? round.winners.map((winner) => `打点: ${winner.winnerPoints}`).join(', ')
+          : '';
+        //TODO:isTsumoがtrueの時にツモ、round.discarderが空白だったら空白に。
+        // const discarderName = round.discarder || 'ツモ';
+        const discarderName = round.isTsumo ? 'ツモ' : (round.discarder ? round.discarder : '');
+        return { id: roundDoc.id, ...round, winnerNames, discarderName, winnerPoints };
       });
 
       const sortedRounds = rounds.sort((a, b) => {
@@ -301,7 +310,7 @@ useEffect(() => {
                 </TouchableOpacity>
               )}
             >
-                <TouchableOpacity
+              <TouchableOpacity
                 key={`${round.roundSeq}-${idx}`}
                 style={styles.roundContainer}
                 onPress={() => handleRoundPress(round.id, round)}
@@ -315,13 +324,26 @@ useEffect(() => {
                     <Text style={styles.roundText}>
                       {round.roundNumber.place}場 {round.roundNumber.round}局 {round.roundNumber.honba}本場
                     </Text>
+
                     {round.isRyuukyoku ? (
-                      <Text style={styles.roundText}>流局</Text>
+                      <View>
+                        <Text style={styles.roundText}>流局</Text>
+                        {round.tenpaiPlayers && round.tenpaiPlayers.map((player, idx) => (
+                          <Text key={idx} style={styles.tenpaiPlayerText}>
+                            聴牌した人: {player}
+                          </Text>
+                        ))}
+                      </View>
                     ) : (
                       <>
-                        <Text style={styles.winnerNameText}>あがった人: {round.winnerName}</Text>
+                        {round.winners && round.winners.map((winner, idx) => (
+                          <View key={idx} style={styles.winnerContainer}>
+                            <Text style={styles.winnerNameText}>あがった人: {winner.winner}</Text>
+                            <Text style={styles.winnerPoints}>打点: {winner.winnerPoints}点</Text>
+                          </View>
+                        ))}
+
                         <Text style={styles.discarderNameText}>放銃した人: {round.discarderName}</Text>
-                        <Text style={styles.winnerPoints}>{round.winnerPoints}</Text>
                       </>
                     )}
                   </View>
@@ -405,6 +427,12 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     color: 'blue'
   },
+  tenpaiPlayerText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginVertical: 5,
+    color: 'blue'
+  },
   winnerPoints: {
     fontSize: 14,
     marginVertical: 5,
@@ -438,11 +466,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     alignSelf: 'stretch', // 親要素に高さを合わせる
-},
-title: {
-  fontSize: 24,
-  fontWeight: 'bold',
-},
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  winnerContainer: {
+    marginBottom: 5,  // 各winnerごとの間隔を設定
+  }
 });
 
 export default GameDetailsScreen;
