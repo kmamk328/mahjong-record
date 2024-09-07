@@ -98,6 +98,10 @@ const ScoreInputScreen = () => {
   const [previousRound, setPreviousRound] = useState(null);
   const [nextRound, setNextRound] = useState(null);
   // const [hanchanId, setHanchanId] = useState<string | null>(null);
+  const [winners, setWinners] = useState([{ winner: '', isOya: false, isTsumo: false, isNaki: false, isReach: false, winnerPoints: '' }]);
+  const [tenpaiPlayers, setTenpaiPlayers] = useState(['']);
+  const [selectedTenpaiIndex, setSelectedTenpaiIndex] = useState(null);
+  const [selectedWinnerIndex, setSelectedWinnerIndex] = useState(null);
 
 
   useLayoutEffect(() => {
@@ -167,44 +171,58 @@ const ScoreInputScreen = () => {
     }
   }, [roundId]);
 
-  const handlePickerChange = (value) => {
+  const handlePickerChange = (value, index) => {
     setModalVisible(false);
-    switch (pickerType) {
-      case 'place':
-        setCurrentRound({
-          ...currentRound,
-          roundNumber: { ...currentRound.roundNumber, place: value },
-        });
-        break;
-      case 'round':
-        setCurrentRound({
-          ...currentRound,
-          roundNumber: { ...currentRound.roundNumber, round: value },
-        });
-        break;
-      case 'honba':
-        setCurrentRound({
-          ...currentRound,
-          roundNumber: { ...currentRound.roundNumber, honba: value },
-        });
-        break;
-      case 'winner':
-        setCurrentRound({ ...currentRound, winner: value });
-        break;
-      case 'discarder':
-        setCurrentRound({ ...currentRound, discarder: value });
-        break;
-      case 'winnerPoints':
-        setCurrentRound({ ...currentRound, winnerPoints: value });
-        break;
-      case 'dora':
-        setCurrentRound({ ...currentRound, dora: value });
-        break;
-      case 'uraDora':
-        setCurrentRound({ ...currentRound, uraDora: value });
-        break;
-      default:
-        break;
+    if (pickerType === 'winner' && selectedWinnerIndex !== null) {
+      const updatedWinners = [...winners];
+      updatedWinners[selectedWinnerIndex].winner = value; // 選択された名前を更新
+      setWinners(updatedWinners);
+    } else if (pickerType === 'winnerPoints' && selectedWinnerIndex !== null) {
+      const updatedWinners = [...winners];
+      updatedWinners[selectedWinnerIndex].winnerPoints = value; // あがり点を更新
+      setWinners(updatedWinners);
+    } else if (pickerType === 'tenpai' && selectedTenpaiIndex !== null) {
+      const updatedTenpaiPlayers = [...tenpaiPlayers];
+      updatedTenpaiPlayers[selectedTenpaiIndex] = value;
+      setTenpaiPlayers(updatedTenpaiPlayers);
+    } else {
+      switch (pickerType) {
+        case 'place':
+          setCurrentRound({
+            ...currentRound,
+            roundNumber: { ...currentRound.roundNumber, place: value },
+          });
+          break;
+        case 'round':
+          setCurrentRound({
+            ...currentRound,
+            roundNumber: { ...currentRound.roundNumber, round: value },
+          });
+          break;
+        case 'honba':
+          setCurrentRound({
+            ...currentRound,
+            roundNumber: { ...currentRound.roundNumber, honba: value },
+          });
+          break;
+        case 'winner':
+          setCurrentRound({ ...currentRound, winner: value });
+          break;
+        case 'discarder':
+          setCurrentRound({ ...currentRound, discarder: value });
+          break;
+        case 'winnerPoints':
+          setCurrentRound({ ...currentRound, winnerPoints: value });
+          break;
+        case 'dora':
+          setCurrentRound({ ...currentRound, dora: value });
+          break;
+        case 'uraDora':
+          setCurrentRound({ ...currentRound, uraDora: value });
+          break;
+        default:
+          break;
+      }
     }
   };
 
@@ -320,6 +338,7 @@ const handleNext = async () => {
         ...currentRound,
         roles: selectedRoles,
         roundSeq,
+        tenpaiPlayers,
         // createdUser: currentUser,
       });
       console.log('Round updated successfully');
@@ -340,6 +359,7 @@ const handleNext = async () => {
         uraDora: currentRound.uraDora,
         isOya: currentRound.isOya,
         roundSeq,
+        tenpaiPlayers,
         // createdUser: currentUser,
       });
       console.log("New Round created with ID:", newRoundRef.id, "at", new Date().toLocaleString());
@@ -450,6 +470,12 @@ const handleNext = async () => {
     updateFilteredPoints(selectedRoles, isTsumo, value);
   };
 
+  const handleSwitchChange = (field, value, index) => {
+    const updatedWinners = [...winners];
+    updatedWinners[index][field] = value;
+    setWinners(updatedWinners);
+  };
+
   const fetchPreviousRoundInfo = () => {
     const previousRound = rounds[currentRoundIndex];
     if (previousRound) {
@@ -504,6 +530,45 @@ const handleNext = async () => {
     setModalVisible(true);
   };
 
+  const openWinPickers = (type, index) => {
+    setPickerType(type);
+    setSelectedWinnerIndex(index); // indexを保存して、後でどの項目を編集しているかを記憶
+    setModalVisible(true);
+  };
+  const addWinnerPicker = () => {
+    if (winners.length < 3) {
+      setWinners([...winners, { winner: '', isOya: false, isTsumo: false, isNaki: false, isReach: false, winnerPoints: '' }]);
+    } else {
+      Alert.alert('エラー', 'あがった人は最大3人まで設定できます。');
+    }
+  };
+
+  const removeWinner = (index) => {
+    const updatedWinners = [...winners];
+    updatedWinners.splice(index, 1);
+    setWinners(updatedWinners);
+  };
+
+  const handleWinnerPickerChange = (value, index, field) => {
+    const updatedWinners = [...winners];
+    updatedWinners[index][field] = value;
+    setWinners(updatedWinners);
+  };
+
+  const addTenpaiPicker = () => {
+    if (tenpaiPlayers.length < 4) {
+      setTenpaiPlayers([...tenpaiPlayers, '']);
+    } else {
+      Alert.alert('エラー', '聴牌者は最大4人まで設定できます。');
+    }
+  };
+
+  const openTenpaiPicker = (index) => {
+    setPickerType('tenpai');
+    setSelectedTenpaiIndex(index);
+    setModalVisible(true);
+  };
+
   return (
     <View style={styles.container}>
     <ScrollView style={styles.container}>
@@ -545,68 +610,85 @@ const handleNext = async () => {
 
         {currentRound.isRyuukyoku ? (
           <View>
-            <Text style={styles.discarderLabel}>聴牌者を選択してください</Text>
-            <TouchableOpacity onPress={() => openPicker('winner')}>
-              <View style={styles.input}>
-                <Text>{currentRound.winner ? currentRound.winner : '聴牌者を選択'}</Text>
-              </View>
-            </TouchableOpacity>
+            <View style={styles.tenpaiHeader}>
+              <Text style={styles.discarderLabel}>聴牌者を選択してください</Text>
+                <TouchableOpacity onPress={addTenpaiPicker}>
+                  <MaterialCommunityIcons name="plus-circle" size={24} color="green" />
+                </TouchableOpacity>
+            </View>
+            {tenpaiPlayers.map((player, index) => (
+                <TouchableOpacity key={index} onPress={() => openTenpaiPicker(index)}>
+                  <View style={styles.input}>
+                    <Text>{player ? player : `聴牌者 ${index + 1} を選択`}</Text>
+                  </View>
+                </TouchableOpacity>
+
+              ))}
           </View>
         ) : (
           <>
             <View>
-              <Text style={styles.discarderLabel}>あがったひと</Text>
-              <TouchableOpacity onPress={() => openPicker('winner')}>
-                <View style={styles.input}>
-                  <Text>{currentRound.winner ? currentRound.winner : 'あがった人を選択'}</Text>
-                </View>
+            <View style={styles.tenpaiHeader}>
+              <Text style={styles.discarderLabel}>あがった人を選択してください</Text>
+              <TouchableOpacity onPress={addWinnerPicker}>
+                <MaterialCommunityIcons name="plus-circle" size={24} color="green" />
               </TouchableOpacity>
+            </View>
+            {winners.map((winner, index) => (
+              <View key={index} style={styles.winnerContainer}>
+                <View style={styles.divider} />
+                <View style={styles.winnerRow}>
+                  <TouchableOpacity onPress={() => openWinPickers('winner', index)} style={styles.nameContainer}>
+                    <View style={styles.inputRow}>
+                      <Text>{winner.winner ? winner.winner : `あがった人 ${index + 1} を選択`}</Text>
+                    </View>
+                  </TouchableOpacity>
 
-              <View style={styles.switchContainer}>
-                <Text style={styles.discarderLabel}>親：</Text>
-                <Switch
-                  value={currentRound.isOya}
-                  onValueChange={() =>
-                    setCurrentRound({ ...currentRound, isOya: !currentRound.isOya })
-                  }
-                />
+                  <TouchableOpacity onPress={() => removeWinner(index)} style={styles.removeButton}>
+                    <MaterialCommunityIcons name="minus-circle" size={24} color="red" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* 親・リーチ・ツモ・鳴きのスイッチ */}
+                <View style={styles.switchContainer}>
+                  <Text style={styles.discarderLabel}>親：</Text>
+                  <Switch
+                    value={winner.isOya}
+                    onValueChange={() => handleWinnerPickerChange(!winner.isOya, index, 'isOya')}
+                  />
+                  <Text style={styles.discarderLabel}>リーチ：</Text>
+                  <Switch
+                    value={winner.isReach}
+                    onValueChange={() => handleWinnerPickerChange(!winner.isReach, index, 'isReach')}
+                  />
+                </View>
+
+                <View style={styles.switchContainer}>
+                  <Text style={styles.discarderLabel}>ツモ：</Text>
+                  <Switch
+                    value={winner.isTsumo}
+                    onValueChange={() => handleWinnerPickerChange(!winner.isTsumo, index, 'isTsumo')}
+                  />
+                  <Text style={styles.discarderLabel}>鳴き：</Text>
+                  <Switch
+                    value={winner.isNaki}
+                    onValueChange={() => handleWinnerPickerChange(!winner.isNaki, index, 'isNaki')}
+                  />
+                </View>
+
+                {/* あがり点のPicker */}
+                <View>
+                  <Text style={styles.discarderLabel}>あがり点</Text>
+                  <TouchableOpacity onPress={() => openWinPickers('winnerPoints', index)}>
+                    <View style={styles.input}>
+                      <Text>{winner.winnerPoints ? winner.winnerPoints : 'あがり点を選択'}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            ))}
 
-            <View style={styles.switchContainer}>
-              <Text style={styles.discarderLabel}>ツモ:</Text>
-              <Switch
-                value={currentRound.isTsumo}
-                onValueChange={() =>
-                  setCurrentRound({ ...currentRound, isTsumo: !currentRound.isTsumo })
-                }
-              />
-              <Text style={styles.discarderLabel}>鳴き:</Text>
-              <Switch
-                value={currentRound.isNaki}
-                onValueChange={() =>
-                  setCurrentRound({ ...currentRound, isNaki: !currentRound.isNaki })
-                }
-              />
-              <Text style={styles.discarderLabel}> リーチ:</Text>
-              <Switch
-                value={currentRound.isReach}
-                onValueChange={() =>
-                  setCurrentRound({ ...currentRound, isReach: !currentRound.isReach })
-                }
-              />
-            </View>
-
-            <View>
-              <Text style={styles.discarderLabel}>あがり点</Text>
-              <TouchableOpacity onPress={() => openPicker('winnerPoints')}>
-                <View style={styles.input}>
-                  <Text>
-                    {currentRound.winnerPoints ? currentRound.winnerPoints : 'あがり点を選択'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+          </View>
 
             <View style={styles.divider} />
 
@@ -624,8 +706,6 @@ const handleNext = async () => {
             )}
           </>
         )}
-
-
       </View>
 
 
@@ -641,14 +721,18 @@ const handleNext = async () => {
                   : pickerType === 'honba'
                   ? currentRound.roundNumber.honba
                   : pickerType === 'winner'
-                  ? currentRound.winner
+                  ? winners[selectedWinnerIndex]?.winner // 選択されたwinnerをインデックスに基づいて表示
                   : pickerType === 'discarder'
                   ? currentRound.discarder
                   : pickerType === 'winnerPoints'
-                  ? currentRound.winnerPoints
+                  ? winners[selectedWinnerIndex]?.winnerPoints // 選択されたwinnerのpointsを表示
                   : pickerType === 'dora'
                   ? currentRound.dora
-                  : currentRound.uraDora
+                  : pickerType === 'uraDora'
+                  ? currentRound.uraDora
+                  : pickerType === 'tenpai'
+                  ? tenpaiPlayers[selectedTenpaiIndex] // 聴牌者の選択肢を表示
+                  : ''
               }
               onValueChange={handlePickerChange}
             >
@@ -676,6 +760,10 @@ const handleNext = async () => {
                 availablePoints.map((point, index) => (
                   <Picker.Item key={index} label={point.toString()} value={point.toString()} />
                 ))}
+              {pickerType === 'tenpai' &&
+                  members.map((member) => (
+                    <Picker.Item key={member.id} label={member.name} value={member.name} />
+                  ))}
               {pickerType === 'dora' &&
                 Array.from({ length: 21 }, (_, i) => i.toString()).map((num) => (
                   <Picker.Item key={num} label={num} value={num} />
@@ -736,6 +824,21 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     justifyContent: 'center',
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    paddingLeft: 10,
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    justifyContent: 'center',
+  },
+  nameContainer: {
+    flex: 1, // 名前部分により多くのスペースを割り当てる
+  },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -782,7 +885,30 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
-},
+  },
+  tenpaiHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  winnerContainer: {
+    // borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+    position: 'relative',
+  },
+  removeButton: {
+    marginLeft: 10,
+  },
+  winnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // justifyContent: 'space-between',
+    justifyContent: 'flex-start', // 余白を詰める
+  },
 });
 
 export default ScoreInputScreen;

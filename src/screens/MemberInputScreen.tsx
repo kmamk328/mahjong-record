@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet, Button, Alert, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, doc, setDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
@@ -11,6 +11,17 @@ const MemberInputScreen = ({ route }) => {
   const [existingMembers, setExistingMembers] = useState([]);
   const [reset, setReset] = useState(false);
   const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: '#FFFFFF',
+      },
+      headerTintColor: '#000',
+      headerTitle: 'メンバー入力',
+      headerTitleAlign: 'center',
+    });
+  }, [navigation]);
 
   useEffect(() => {
     const fetchMembers = async () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert  } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { FAB } from 'react-native-paper'; // Floating Action Button
@@ -40,39 +40,45 @@ const HanchanListScreen = ({ route }) => {
     });
   }, [navigation]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchGameData();
+    }, [])
+  );
+
   useEffect(() => {
-    const fetchGameData = async () => {
-      const gameRef = doc(db, 'games', gameId);
-      const gameDoc = await getDoc(gameRef);
-      if (gameDoc.exists) {
-        const gameData = gameDoc.data();
-        setCreatedAt(gameData.createdAt.toDate().toLocaleDateString('ja-JP', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        }));
-
-        const membersList = await Promise.all(
-          gameData.members.map(async (memberId) => {
-            const memberDoc = await getDoc(doc(db, 'members', memberId));
-            return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
-          })
-        );
-        setMembers(membersList);
-
-        const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
-        const hanchansSnapshot = await getDocs(hanchansCollection);
-        let hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
-
-        hanchansList = hanchansList.sort((a, b) => a.createdAt.toDate() - b.createdAt.toDate());
-
-        setHanchans(hanchansList);
-      }
-      setLoading(false); // データ取得後にloadingをfalseに設定
-    };
-
     fetchGameData();
   }, [gameId, route]);
+
+  const fetchGameData = async () => {
+    const gameRef = doc(db, 'games', gameId);
+    const gameDoc = await getDoc(gameRef);
+    if (gameDoc.exists) {
+      const gameData = gameDoc.data();
+      setCreatedAt(gameData.createdAt.toDate().toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }));
+
+      const membersList = await Promise.all(
+        gameData.members.map(async (memberId) => {
+          const memberDoc = await getDoc(doc(db, 'members', memberId));
+          return memberDoc.exists() ? memberDoc.data().name : 'Unknown Member';
+        })
+      );
+      setMembers(membersList);
+
+      const hanchansCollection = collection(db, 'games', gameId, 'hanchan');
+      const hanchansSnapshot = await getDocs(hanchansCollection);
+      let hanchansList = hanchansSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), gameId }));
+
+      hanchansList = hanchansList.sort((a, b) => a.createdAt.toDate() - b.createdAt.toDate());
+
+      setHanchans(hanchansList);
+    }
+    setLoading(false); // データ取得後にloadingをfalseに設定
+  };
 
   const handleAddRound = async () => {
     try {
