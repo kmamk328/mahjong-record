@@ -120,12 +120,20 @@ const DashboardScreen = () => {
 
                         roundsSnapshot.forEach((roundDoc) => {
                             const round = roundDoc.data();
-                            if (round.winner === selectedMemberName) {
+                            console.log("round:",round);
+
+                            // Update this part to check if the selected member is in the winners array
+                            const winnerFound = round.winners?.some((winner) => winner.winner === selectedMemberName);
+                            console.log("selectedMemberName:",selectedMemberName);
+                            console.log("winnerFound:",winnerFound);
+                            if (winnerFound) {
                                 gameStats.winCount += 1;
                                 if (round.reach) gameStats.reachWinCount += 1;
                                 if (round.naki) gameStats.nakiWinCount += 1;
 
                                 const numericWinnerPoints = convertWinnerPoints(round);
+                                console.log("numericWinnerPoints:",numericWinnerPoints);
+                                console.log("gameStats.maxWinPoints:",gameStats.maxWinPoints);
                                 if (numericWinnerPoints > gameStats.maxWinPoints) {
                                     gameStats.maxWinPoints = round.winnerPoints;
                                 }
@@ -138,6 +146,7 @@ const DashboardScreen = () => {
                                     }
                                 });
                             }
+
                             if (round.discarder === selectedMember) {
                                 gameStats.discardCount += 1;
                             }
@@ -158,6 +167,7 @@ const DashboardScreen = () => {
         fetchData();
     }, [selectedMember, selectedMemberName]);
 
+
     const handlePickerSelect = async (value) => {
         try {
             const selectedMemberDoc = await getDoc(doc(db, 'members', value));
@@ -175,7 +185,7 @@ const DashboardScreen = () => {
     };
 
     function convertWinnerPoints(round) {
-        if (!round.winnerPoints) {
+        if (!round.) {
             return 0;
         }
         let winnerPoints = round.winnerPoints;

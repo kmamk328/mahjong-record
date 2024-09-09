@@ -247,21 +247,6 @@ const ScoreInputScreen = () => {
     });
   }, [navigation]);
 
-  // useEffect(() => {
-  //   console.log("selectedWinnerIndex:", selectedWinnerIndex);
-  //   console.log("availablePoints:", availablePoints);
-  
-  //   if (availablePoints[selectedWinnerIndex] && Array.isArray(availablePoints[selectedWinnerIndex])) {
-  //     console.log("availablePoints[selectedWinnerIndex]:", availablePoints[selectedWinnerIndex]);
-  //   } else {
-  //     console.error("availablePoints[selectedWinnerIndex] is undefined or not an array");
-  //   }
-  // }, [availablePoints, selectedWinnerIndex]);
-
-
-  // useEffect(() => {
-  //   updateAvailablePoints();
-  // }, [currentRound.isTsumo, currentRound.isOya]);
   useEffect(() => {
     winners.forEach((winner, index) => {
       console.log("--------------------------" );
