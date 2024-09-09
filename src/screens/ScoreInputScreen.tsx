@@ -49,7 +49,7 @@ const ScoreInputScreen = () => {
   const [members, setMembers] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerType, setPickerType] = useState('');
-  const [availablePoints, setAvailablePoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const [availablePoints, setAvailablePoints] = useState<(string | number)[]>([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const [filteredPoints, setFilteredPoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const navigation = useNavigation();
   const route = useRoute();
@@ -98,7 +98,17 @@ const ScoreInputScreen = () => {
   const [previousRound, setPreviousRound] = useState(null);
   const [nextRound, setNextRound] = useState(null);
   // const [hanchanId, setHanchanId] = useState<string | null>(null);
-  const [winners, setWinners] = useState([{ winner: '', isOya: false, isTsumo: false, isNaki: false, isReach: false, winnerPoints: '' }]);
+  const [winners, setWinners] = useState([
+    {
+      winner: '',
+      isOya: false,
+      isTsumo: false,
+      isNaki: false,
+      isReach: false,
+      winnerPoints: '',
+      availablePoints: [] // ここで availablePoints を初期化
+    }
+  ]);
   const [tenpaiPlayers, setTenpaiPlayers] = useState(['']);
   const [selectedTenpaiIndex, setSelectedTenpaiIndex] = useState(null);
   const [selectedWinnerIndex, setSelectedWinnerIndex] = useState(null);
@@ -237,10 +247,40 @@ const ScoreInputScreen = () => {
     });
   }, [navigation]);
 
+  // useEffect(() => {
+  //   console.log("selectedWinnerIndex:", selectedWinnerIndex);
+  //   console.log("availablePoints:", availablePoints);
+  
+  //   if (availablePoints[selectedWinnerIndex] && Array.isArray(availablePoints[selectedWinnerIndex])) {
+  //     console.log("availablePoints[selectedWinnerIndex]:", availablePoints[selectedWinnerIndex]);
+  //   } else {
+  //     console.error("availablePoints[selectedWinnerIndex] is undefined or not an array");
+  //   }
+  // }, [availablePoints, selectedWinnerIndex]);
 
+
+  // useEffect(() => {
+  //   updateAvailablePoints();
+  // }, [currentRound.isTsumo, currentRound.isOya]);
   useEffect(() => {
-    updateAvailablePoints();
-  }, [currentRound.isTsumo, currentRound.isOya]);
+    winners.forEach((winner, index) => {
+      console.log("--------------------------" );
+      console.log("useEffect winner index:",index );
+      console.log("useEffect winner.isOya:",winner.isOya );
+      console.log("useEffect winner.isTsumo:",winner.isTsumo );
+      const points = updateAvailablePointsForWinner(winner.isOya, winner.isTsumo);
+      // ここで各winnerごとに異なる選択肢を設定します
+      setAvailablePoints((prevPoints) => {
+        const newPoints = [...prevPoints];
+        newPoints[index] = points; // 特定のwinnerに対してポイントを更新
+        console.log("index",index);
+        console.log("prevPoints",prevPoints);
+        console.log("newPoints[index]",newPoints[index]);
+        return newPoints;
+      });
+    });
+  }, [winners]); // winnersが更新されたら呼び出す
+
 
 
   const toggleRoleSelection = (role) => {
@@ -268,19 +308,20 @@ const ScoreInputScreen = () => {
     setFilteredPoints(newFilteredPoints);
   };
 
-  const updateAvailablePoints = () => {
+
+  const updateAvailablePointsForWinner = (isOya, isTsumo) => {
     let points = [];
-    if (currentRound.isOya && currentRound.isTsumo) {
+    if (isOya && isTsumo) {
       points = [
         500, 700, 800, 1000, 1200, 1300, 1500, 1600, 2000, 2300, 2600,
         2900, 3200, 3600, 4000, 6000, 8000, 12000, 16000, 32000
       ].map(p => `${p}オール`);
-    } else if (currentRound.isOya && !currentRound.isTsumo) {
+    } else if (isOya && !isTsumo) {
       points = [
         1500, 2000, 2400, 2900, 3400, 3900, 4400, 4800, 5300, 5800, 6800,
         7700, 8700, 9600, 10600, 12000, 18000, 24000, 36000, 48000, 96000
       ];
-    } else if (!currentRound.isOya && currentRound.isTsumo) {
+    } else if (!isOya && isTsumo) {
       points = [
         '子(300) 親(500)', '子(400) 親(700)', '子(400) 親(800)', '子(500) 親(1000)',
         '子(600) 親(1200)', '子(700) 親(1300)', '子(800) 親(1500)', '子(800) 親(1600)',
@@ -295,8 +336,55 @@ const ScoreInputScreen = () => {
         5800, 6400, 7100, 7700, 8000, 12000, 16000, 24000, 32000, 64000
       ];
     }
-    setAvailablePoints(points);
+    console.log("points",points);
+    return points;
   };
+
+  const handleOyaSwitch = (value, index) => {
+    const updatedWinners = [...winners];
+    updatedWinners[index].isOya = value;
+    setWinners(updatedWinners);
+
+    // 個別の親とツモの状態に基づいてポイントを計算
+    const newPoints = updateAvailablePointsForWinner(value, updatedWinners[index].isTsumo);
+    console.log("Oya newPoints",newPoints);
+    setAvailablePoints(newPoints);  // 選択肢を更新
+  };
+
+  const handleTsumoSwitch = (value, index) => {
+    const updatedWinners = [...winners];
+    updatedWinners[index].isTsumo = value;
+    setWinners(updatedWinners);
+
+    // 個別の親とツモの状態に基づいてポイントを計算
+    const newPoints = updateAvailablePointsForWinner(updatedWinners[index].isOya, value);
+    console.log("Tsumo newPoints",newPoints);
+    setAvailablePoints(newPoints);  // 選択肢を更新
+  };
+
+  // const handleOyaSwitch = (value, index) => {
+  //   const updatedWinners = [...winners];
+  //   updatedWinners[index].isOya = value;
+  //   setWinners(updatedWinners);
+
+  //   // 親の状態が変わったらポイントの選択肢を更新
+  //   setCurrentRound({ ...currentRound, isOya: value });
+  //   updateAvailablePoints();
+  // };
+
+  // // ツモスイッチの変更をハンドリングする関数
+  // const handleTsumoSwitch = (value, index) => {
+  //   const updatedWinners = [...winners];
+  //   updatedWinners[index].isTsumo = value;
+  //   setWinners(updatedWinners);
+
+  //   // ツモの状態が変わったらポイントの選択肢を更新
+  //   setCurrentRound({ ...currentRound, isTsumo: value });
+  //   updateAvailablePoints();
+  // };
+
+
+
 
   useEffect(() => {
     if (roundData) {
@@ -438,26 +526,6 @@ const handleNext = async () => {
     setSelectedRoles([]);
   };
 
-  const handleOyaSwitch = (value, index) => {
-    const updatedWinners = [...winners];
-    updatedWinners[index].isOya = value;
-    setWinners(updatedWinners);
-  
-    // 親の状態が変わったらポイントの選択肢を更新
-    setCurrentRound({ ...currentRound, isOya: value });
-    updateAvailablePoints();
-  };
-  
-  // ツモスイッチの変更をハンドリングする関数
-  const handleTsumoSwitch = (value, index) => {
-    const updatedWinners = [...winners];
-    updatedWinners[index].isTsumo = value;
-    setWinners(updatedWinners);
-  
-    // ツモの状態が変わったらポイントの選択肢を更新
-    setCurrentRound({ ...currentRound, isTsumo: value });
-    updateAvailablePoints();
-  };
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
@@ -563,6 +631,7 @@ const handleNext = async () => {
     setSelectedWinnerIndex(index); // indexを保存して、後でどの項目を編集しているかを記憶
     setModalVisible(true);
   };
+
   const addWinnerPicker = () => {
     if (winners.length < 3) {
       setWinners([...winners, { winner: '', isOya: false, isTsumo: false, isNaki: false, isReach: false, winnerPoints: '' }]);
@@ -787,9 +856,11 @@ const handleNext = async () => {
                   <Picker.Item key={member.id} label={member.name} value={member.name} />
                 ))}
               {pickerType === 'winnerPoints' &&
-                availablePoints.map((point, index) => (
+                selectedWinnerIndex !== null && Array.isArray(availablePoints[selectedWinnerIndex]) &&
+                availablePoints[selectedWinnerIndex].map((point, index) => (
                   <Picker.Item key={index} label={point.toString()} value={point.toString()} />
-                ))}
+                ))
+              }
               {pickerType === 'tenpai' &&
                   members.map((member) => (
                     <Picker.Item key={member.id} label={member.name} value={member.name} />
