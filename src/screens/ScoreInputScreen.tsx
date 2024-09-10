@@ -112,6 +112,7 @@ const ScoreInputScreen = () => {
   const [tenpaiPlayers, setTenpaiPlayers] = useState(['']);
   const [selectedTenpaiIndex, setSelectedTenpaiIndex] = useState(null);
   const [selectedWinnerIndex, setSelectedWinnerIndex] = useState(null);
+  const [selectedTempValue, setSelectedTempValue] = useState(''); // Holds the temporarily selected value
 
 
   useLayoutEffect(() => {
@@ -181,59 +182,122 @@ const ScoreInputScreen = () => {
     }
   }, [roundId]);
 
-  const handlePickerChange = (value, index) => {
-    setModalVisible(false);
-    if (pickerType === 'winner' && selectedWinnerIndex !== null) {
+  // const handlePickerChange = (value, index) => {
+  //   setModalVisible(false);
+  //   if (pickerType === 'winner' && selectedWinnerIndex !== null) {
+  //     const updatedWinners = [...winners];
+  //     updatedWinners[selectedWinnerIndex].winner = value; // 選択された名前を更新
+  //     setWinners(updatedWinners);
+  //   } else if (pickerType === 'winnerPoints' && selectedWinnerIndex !== null) {
+  //     const updatedWinners = [...winners];
+  //     updatedWinners[selectedWinnerIndex].winnerPoints = value; // あがり点を更新
+  //     setWinners(updatedWinners);
+  //   } else if (pickerType === 'tenpai' && selectedTenpaiIndex !== null) {
+  //     const updatedTenpaiPlayers = [...tenpaiPlayers];
+  //     updatedTenpaiPlayers[selectedTenpaiIndex] = value;
+  //     setTenpaiPlayers(updatedTenpaiPlayers);
+  //   } else {
+  //     switch (pickerType) {
+  //       case 'place':
+  //         setCurrentRound({
+  //           ...currentRound,
+  //           roundNumber: { ...currentRound.roundNumber, place: value },
+  //         });
+  //         break;
+  //       case 'round':
+  //         setCurrentRound({
+  //           ...currentRound,
+  //           roundNumber: { ...currentRound.roundNumber, round: value },
+  //         });
+  //         break;
+  //       case 'honba':
+  //         setCurrentRound({
+  //           ...currentRound,
+  //           roundNumber: { ...currentRound.roundNumber, honba: value },
+  //         });
+  //         break;
+  //       case 'winner':
+  //         setCurrentRound({ ...currentRound, winner: value });
+  //         break;
+  //       case 'discarder':
+  //         setCurrentRound({ ...currentRound, discarder: value });
+  //         break;
+  //       case 'winnerPoints':
+  //         setCurrentRound({ ...currentRound, winnerPoints: value });
+  //         break;
+  //       case 'dora':
+  //         setCurrentRound({ ...currentRound, dora: value });
+  //         break;
+  //       case 'uraDora':
+  //         setCurrentRound({ ...currentRound, uraDora: value });
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //   }
+  // };
+// モーダルが開かれた時に `selectedTempValue` を初期化する
+useEffect(() => {
+  if (modalVisible) {
+    if (pickerType === 'place') {
+      setSelectedTempValue(currentRound.roundNumber.place);
+    } else if (pickerType === 'round') {
+      setSelectedTempValue(currentRound.roundNumber.round);
+    } else if (pickerType === 'honba') {
+      setSelectedTempValue(currentRound.roundNumber.honba);
+    } else if (pickerType === 'winner' && selectedWinnerIndex !== null) {
+      setSelectedTempValue(winners[selectedWinnerIndex]?.winner || '');
+    } else if (pickerType === 'discarder') {
+      setSelectedTempValue(currentRound.discarder || '');
+    } else if (pickerType === 'winnerPoints' && selectedWinnerIndex !== null) {
+      setSelectedTempValue(winners[selectedWinnerIndex]?.winnerPoints || '');
+    } else if (pickerType === 'dora') {
+      setSelectedTempValue(currentRound.dora.toString());
+    } else if (pickerType === 'uraDora') {
+      setSelectedTempValue(currentRound.uraDora.toString());
+    } else if (pickerType === 'tenpai' && selectedTenpaiIndex !== null) {
+      setSelectedTempValue(tenpaiPlayers[selectedTenpaiIndex] || '');
+    }
+  }
+}, [modalVisible, pickerType, selectedWinnerIndex, selectedTenpaiIndex, currentRound, winners, tenpaiPlayers]);
+
+  // OKボタンが押された際に値を反映させる
+  const handleApplyPickerChange = () => {
+    if (pickerType === 'place') {
+      setCurrentRound({
+        ...currentRound,
+        roundNumber: { ...currentRound.roundNumber, place: selectedTempValue },
+      });
+    } else if (pickerType === 'round') {
+      setCurrentRound({
+        ...currentRound,
+        roundNumber: { ...currentRound.roundNumber, round: selectedTempValue },
+      });
+    } else if (pickerType === 'honba') {
+      setCurrentRound({
+        ...currentRound,
+        roundNumber: { ...currentRound.roundNumber, honba: selectedTempValue },
+      });
+    } else if (pickerType === 'winner' && selectedWinnerIndex !== null) {
       const updatedWinners = [...winners];
-      updatedWinners[selectedWinnerIndex].winner = value; // 選択された名前を更新
+      updatedWinners[selectedWinnerIndex].winner = selectedTempValue;
       setWinners(updatedWinners);
     } else if (pickerType === 'winnerPoints' && selectedWinnerIndex !== null) {
       const updatedWinners = [...winners];
-      updatedWinners[selectedWinnerIndex].winnerPoints = value; // あがり点を更新
+      updatedWinners[selectedWinnerIndex].winnerPoints = selectedTempValue;
       setWinners(updatedWinners);
+    } else if (pickerType === 'discarder') {
+      setCurrentRound({ ...currentRound, discarder: selectedTempValue });
+    } else if (pickerType === 'dora') {
+      setCurrentRound({ ...currentRound, dora: parseInt(selectedTempValue, 10) });
+    } else if (pickerType === 'uraDora') {
+      setCurrentRound({ ...currentRound, uraDora: parseInt(selectedTempValue, 10) });
     } else if (pickerType === 'tenpai' && selectedTenpaiIndex !== null) {
       const updatedTenpaiPlayers = [...tenpaiPlayers];
-      updatedTenpaiPlayers[selectedTenpaiIndex] = value;
+      updatedTenpaiPlayers[selectedTenpaiIndex] = selectedTempValue;
       setTenpaiPlayers(updatedTenpaiPlayers);
-    } else {
-      switch (pickerType) {
-        case 'place':
-          setCurrentRound({
-            ...currentRound,
-            roundNumber: { ...currentRound.roundNumber, place: value },
-          });
-          break;
-        case 'round':
-          setCurrentRound({
-            ...currentRound,
-            roundNumber: { ...currentRound.roundNumber, round: value },
-          });
-          break;
-        case 'honba':
-          setCurrentRound({
-            ...currentRound,
-            roundNumber: { ...currentRound.roundNumber, honba: value },
-          });
-          break;
-        case 'winner':
-          setCurrentRound({ ...currentRound, winner: value });
-          break;
-        case 'discarder':
-          setCurrentRound({ ...currentRound, discarder: value });
-          break;
-        case 'winnerPoints':
-          setCurrentRound({ ...currentRound, winnerPoints: value });
-          break;
-        case 'dora':
-          setCurrentRound({ ...currentRound, dora: value });
-          break;
-        case 'uraDora':
-          setCurrentRound({ ...currentRound, uraDora: value });
-          break;
-        default:
-          break;
-      }
     }
+    setModalVisible(false); // モーダルを閉じる
   };
 
   useLayoutEffect(() => {
@@ -800,7 +864,7 @@ const handleNext = async () => {
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.pickerContainer}>
-            <Picker
+            {/* <Picker
               selectedValue={
                 pickerType === 'place'
                   ? currentRound.roundNumber.place
@@ -823,7 +887,11 @@ const handleNext = async () => {
                   : ''
               }
               onValueChange={handlePickerChange}
-            >
+            > */}
+              <Picker
+                selectedValue={selectedTempValue}
+                onValueChange={(value) => setSelectedTempValue(value)} // Update the temp value
+              >
               {pickerType === 'place' &&
                 ['東', '南', '西', '北'].map((place) => (
                   <Picker.Item key={place} label={place} value={place} />
@@ -863,6 +931,7 @@ const handleNext = async () => {
                   <Picker.Item key={num} label={num} value={num} />
                 ))}
             </Picker>
+            <Button title="OK" onPress={handleApplyPickerChange} />
             <Button title="閉じる" onPress={() => setModalVisible(false)} />
           </View>
         </View>

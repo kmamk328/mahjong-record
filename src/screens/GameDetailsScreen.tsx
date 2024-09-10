@@ -107,10 +107,10 @@ useEffect(() => {
   }, [hanchan]);
 
   const fetchHanchanDetails = async () => {
-    setLoading(true);  // Set loading to true before fetching data
+    // setLoading(true);  // Set loading to true before fetching data
     try {
       // Simulate a delay of 3 seconds (3000 milliseconds)
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
       const roundsCollection = collection(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds');
       const roundsSnapshot = await getDocs(roundsCollection);
 
@@ -360,6 +360,7 @@ useEffect(() => {
                     <TouchableOpacity
                       key={`${round.roundSeq}-${idx}`}
                       style={styles.roundContainer}
+                      onPress={() => handleRoundPress(round.id, round)}
                     >
                       <View style={styles.roundBox}>
                         <Image

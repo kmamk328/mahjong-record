@@ -9,7 +9,8 @@ import { db, auth } from '../../firebaseConfig';
 const DashboardScreen = () => {
     const navigation = useNavigation();
     const [yourStats, setYourStats] = useState([]);
-    const [selectedMember, setSelectedMember] = useState(''); // 選択されたメンバーの名前を保存
+    const [selectedMember, setSelectedMember] = useState(''); // 選択されたメンバーのIDを保存
+    const [selectedTempMember, setSelectedTempMember] = useState(''); // 仮選択用のメンバーID
     const [selectedMemberName, setSelectedMemberName] = useState('');
     const [members, setMembers] = useState([]); // 全メンバーを保存
     const [modalVisible, setModalVisible] = useState(false);
@@ -35,8 +36,6 @@ const DashboardScreen = () => {
             const membersCollection = collection(db, 'members');
             const membersQuery = query(
                 membersCollection,
-                // 端末ごとの制御になっているので
-                // 現在のユーザーが作成したメンバーのみを取得
                 where('createdUser', '==', currentUser.uid)
             );
             const membersSnapshot = await getDocs(membersQuery);
@@ -169,24 +168,11 @@ const DashboardScreen = () => {
         fetchData();
     }, [selectedMember, selectedMemberName]);
     
-    
-
-
-    const handlePickerSelect = async (value) => {
-        try {
-            const selectedMemberDoc = await getDoc(doc(db, 'members', value));
-            const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
-            setSelectedMember(value);
-            setSelectedMemberName(memberName);
-
-            console.log('Selected Member ID:', value);
-            console.log('Selected Member Name:', memberName);
-
-            setModalVisible(false);
-        } catch (error) {
-            console.error('Error fetching selected member name: ', error);
-        }
+    const handleApplyPickerChange = () => {
+        setSelectedMember(selectedTempMember); // 仮選択値を実際の選択値に反映
+        setModalVisible(false); // モーダルを閉じる
     };
+
 
     function convertWinnerPoints(round) {
         if (!round.winnerPoints){
@@ -204,6 +190,8 @@ const DashboardScreen = () => {
             return parseInt(winnerPoints, 10);
         }
     }
+
+
 
     return (
         <View style={styles.container}>
@@ -225,18 +213,16 @@ const DashboardScreen = () => {
                     {loading ? (
                         <>
                             {[1, 2, 3].map((_, index) => (
-                                <ContentLoader 
+                                <ContentLoader
                                     key={index}
                                     speed={2}
                                     width={400}
-                                    height={70}
-                                    viewBox="0 0 400 70"
+                                    height={100}
+                                    viewBox="0 0 400 100"
                                     backgroundColor="#f3f3f3"
                                     foregroundColor="#ecebeb"
                                 >
-                                    <Rect x="0" y="0" rx="4" ry="4" width="70" height="70" />
-                                    <Rect x="80" y="17" rx="4" ry="4" width="300" height="10" />
-                                    <Rect x="80" y="37" rx="4" ry="4" width="250" height="10" />
+                                    <Rect x="0" y="0" rx="4" ry="4" width="300" height="70" />
                                 </ContentLoader>
                             ))}
                         </>
@@ -295,13 +281,14 @@ const DashboardScreen = () => {
                 <View style={styles.modalContainer}>
                     <View style={styles.pickerContainer}>
                         <Picker
-                            selectedValue={selectedMember}
-                            onValueChange={handlePickerSelect}
+                            selectedValue={selectedTempMember}
+                            onValueChange={(value) => setSelectedTempMember(value)} // 仮選択値を更新
                         >
                             {members.map((member) => (
                                 <Picker.Item key={member.id} label={member.name} value={member.id} />
                             ))}
                         </Picker>
+                        <Button title="OK" onPress={handleApplyPickerChange} />
                         <Button title="閉じる" onPress={() => setModalVisible(false)} />
                     </View>
                 </View>

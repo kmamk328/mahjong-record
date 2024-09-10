@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'; // Ensure you have installed @exp
 const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, label }) => {
   const [isCustomInput, setIsCustomInput] = useState(false);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const [tempValue, setTempValue] = useState(value); // 仮選択用の値
 
   useEffect(() => {
     if (reset) {
@@ -17,17 +18,24 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, lab
   const handlePickerChange = (itemValue) => {
     if (itemValue === 'custom') {
       setIsCustomInput(true);
-      setIsPickerVisible(false); // Pickerを閉じる
-      onChange('');
+      setTempValue(''); // カスタム入力に切り替えた場合は空にする
+    } else if (itemValue === '') {
+      setIsCustomInput(false); // 空白を選択した場合、カスタム入力にしない
+      setTempValue(''); // 空白にする
     } else {
       setIsCustomInput(false);
-      onChange(itemValue);
-      setIsPickerVisible(false); // Pickerを閉じる
+      setTempValue(itemValue);
     }
+  };
+
+  const applyPickerSelection = () => {
+    onChange(tempValue); // 選択した値を確定
+    setIsPickerVisible(false); // モーダルを閉じる
   };
 
   const showPicker = () => {
     setIsPickerVisible(true);
+    setTempValue(value); // 現在の値を仮選択に設定
   };
 
   return (
@@ -54,15 +62,17 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, lab
         <View style={styles.modalContainer}>
           <View style={styles.pickerContainer}>
             <Picker
-              selectedValue={value}
+              selectedValue={tempValue}
               onValueChange={handlePickerChange}
             >
-              <Picker.Item label="新しいメンバーを入力" value="custom" />
+              {/* <Picker.Item label="" value="" /> */}
+              <Picker.Item label="新たに入力" value="custom" />
               {existingMembers.map((member, index) => (
                 <Picker.Item key={index} label={member} value={member} />
               ))}
             </Picker>
-            <Button title="閉じる" onPress={() => setIsPickerVisible(false)} />
+            <Button title="OK" onPress={applyPickerSelection} />
+            {/* <Button title="閉じる" onPress={() => setIsPickerVisible(false)} /> */}
           </View>
         </View>
       </Modal>
