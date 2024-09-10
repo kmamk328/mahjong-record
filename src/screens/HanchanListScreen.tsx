@@ -153,7 +153,7 @@ const HanchanListScreen = ({ route }) => {
         </View>
         {loading ? (
           <>
-            {[1, 2, 3].map((_, index) => (
+            {[1].map((_, index) => (
               <ContentLoader
                 key={index}
                 speed={2}
@@ -163,8 +163,7 @@ const HanchanListScreen = ({ route }) => {
                 backgroundColor="#f3f3f3"
                 foregroundColor="#ecebeb"
               >
-                <Rect x="0" y="0" rx="4" ry="4" width="70" height="70" />
-                <Rect x="90" y="20" rx="4" ry="4" width="250" height="100" />
+                <Rect x="0" y="0" rx="4" ry="4" width="300" height="100" />
               </ContentLoader>
             ))}
           </>
@@ -212,7 +211,12 @@ const HanchanListScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 6,
+  },
+  dateContainer: {
+    marginTop: 16,
+    marginBottom: 0,
+    padding: 10,
   },
   dateText: {
     fontSize: 16,

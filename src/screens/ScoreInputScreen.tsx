@@ -347,27 +347,6 @@ const ScoreInputScreen = () => {
     setAvailablePoints(newPoints);  // 選択肢を更新
   };
 
-  // const handleOyaSwitch = (value, index) => {
-  //   const updatedWinners = [...winners];
-  //   updatedWinners[index].isOya = value;
-  //   setWinners(updatedWinners);
-
-  //   // 親の状態が変わったらポイントの選択肢を更新
-  //   setCurrentRound({ ...currentRound, isOya: value });
-  //   updateAvailablePoints();
-  // };
-
-  // // ツモスイッチの変更をハンドリングする関数
-  // const handleTsumoSwitch = (value, index) => {
-  //   const updatedWinners = [...winners];
-  //   updatedWinners[index].isTsumo = value;
-  //   setWinners(updatedWinners);
-
-  //   // ツモの状態が変わったらポイントの選択肢を更新
-  //   setCurrentRound({ ...currentRound, isTsumo: value });
-  //   updateAvailablePoints();
-  // };
-
 
 
 
@@ -473,6 +452,7 @@ const handleNext = async () => {
 
     setIsDialogOpen(true);
     handleDialogClose();
+    resetForm();
   } catch (error) {
     console.error("Error saving round data: ", error);
   }
@@ -581,9 +561,33 @@ const handleNext = async () => {
       isTsumo: false,
       isOya: false,
       roles: [],
-      roundSeq: 0
+      roundSeq: currentRound.roundSeq + 1,  // Increment the round sequence for the next round
     });
+
+    // Reset the winners array to its initial state with one empty winner
+    setWinners([
+      {
+        winner: '',
+        isOya: false,
+        isTsumo: false,
+        isNaki: false,
+        isReach: false,
+        winnerPoints: '',
+        availablePoints: []  // Reset available points for the winner
+      }
+    ]);
+
+    // Reset the tenpai players array to its initial state
+    setTenpaiPlayers(['']);  // Start with an empty player
+
+    // Clear other selections
     setSelectedRoles([]);
+    setAvailablePoints([1, 2, 3, 4, 5, 6, 7, 8, 9]);  // Reset available points for role selections
+    setFilteredPoints([1, 2, 3, 4, 5, 6, 7, 8, 9]);   // Reset filtered points
+    setSelectedWinnerIndex(null);  // Reset the selected winner index
+    setSelectedTenpaiIndex(null);  // Reset the selected tenpai index
+
+    console.log('Form reset for the next round');
   };
 
   const confirmSave = () => {
@@ -650,6 +654,8 @@ const handleNext = async () => {
     setSelectedTenpaiIndex(index);
     setModalVisible(true);
   };
+
+  const hasTsumoWinner = winners.some((winner) => winner.isTsumo === true);
 
   return (
     <View style={styles.container}>
@@ -776,14 +782,12 @@ const handleNext = async () => {
 
             <View style={styles.divider} />
 
-            {!currentRound.isTsumo && (
+            {!hasTsumoWinner && (
               <View>
                 <Text style={styles.discarderLabel}>放銃したひと:</Text>
                 <TouchableOpacity onPress={() => openPicker('discarder')}>
                   <View style={styles.input}>
-                    <Text>
-                      {currentRound.discarder ? currentRound.discarder : '放銃した人を選択'}
-                    </Text>
+                    <Text>{currentRound.discarder ? currentRound.discarder : '放銃した人を選択'}</Text>
                   </View>
                 </TouchableOpacity>
               </View>

@@ -63,15 +63,15 @@ const DashboardScreen = () => {
                 setYourStats([]);
                 return;
             }
-
+    
             try {
                 setLoading(true); // メンバー選択後のロード中はtrueに設定
-
+    
                 const currentUser = auth.currentUser;
                 const selectedMemberDoc = await getDoc(doc(db, 'members', selectedMember));
                 const memberName = selectedMemberDoc.exists() ? selectedMemberDoc.data().name : '';
                 setSelectedMemberName(memberName);
-
+    
                 const gamesQuery = query(
                     collection(db, 'games'),
                     where('members', 'array-contains', selectedMember),
@@ -79,26 +79,26 @@ const DashboardScreen = () => {
                     orderBy('createdAt', 'desc'),
                     limit(5)
                 );
-
+    
                 const gamesSnapshot = await getDocs(gamesQuery);
-
+    
                 if (gamesSnapshot.empty) {
                     setYourStats([]);
                     return;
                 }
-
+    
                 let aggregatedStats = [];
-
+    
                 for (const gameDoc of gamesSnapshot.docs) {
                     const gameId = gameDoc.id;
                     const gameData = gameDoc.data();
-
+    
                     const gameDate = gameData.createdAt.toDate().toLocaleDateString('ja-JP', {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit'
                     });
-
+    
                     let gameStats = {
                         gameId,
                         gameDate,
@@ -112,50 +112,52 @@ const DashboardScreen = () => {
                     };
                     const hanchanCollection = collection(db, 'games', gameId, 'hanchan');
                     const hanchanSnapshot = await getDocs(hanchanCollection);
-
+    
                     for (const hanchanDoc of hanchanSnapshot.docs) {
                         const roundsCollection = collection(db, 'games', gameId, 'hanchan', hanchanDoc.id, 'rounds');
                         const roundsSnapshot = await getDocs(roundsCollection);
                         if (roundsSnapshot.empty) continue;
-
+    
                         roundsSnapshot.forEach((roundDoc) => {
                             const round = roundDoc.data();
-                            console.log("round:",round);
-
-                            // Update this part to check if the selected member is in the winners array
-                            const winnerFound = round.winners?.some((winner) => winner.winner === selectedMemberName);
-                            console.log("selectedMemberName:",selectedMemberName);
-                            console.log("winnerFound:",winnerFound);
-                            if (winnerFound) {
-                                gameStats.winCount += 1;
-                                if (round.reach) gameStats.reachWinCount += 1;
-                                if (round.naki) gameStats.nakiWinCount += 1;
-
-                                const numericWinnerPoints = convertWinnerPoints(round);
-                                console.log("numericWinnerPoints:",numericWinnerPoints);
-                                console.log("gameStats.maxWinPoints:",gameStats.maxWinPoints);
-                                if (numericWinnerPoints > gameStats.maxWinPoints) {
-                                    gameStats.maxWinPoints = round.winnerPoints;
-                                }
-
-                                round.selectedRoles?.forEach((role) => {
-                                    if (gameStats.roles[role]) {
-                                        gameStats.roles[role] += 1;
-                                    } else {
-                                        gameStats.roles[role] = 1;
+    
+                            // Iterate through the winners array and check if the selectedMember is among the winners
+                            round.winners?.forEach((winner) => {
+                                if (winner.winner === selectedMemberName) {
+                                    gameStats.winCount += 1;
+    
+                                    // Check for Reach and Naki conditions
+                                    if (winner.isReach) gameStats.reachWinCount += 1;
+                                    if (winner.isNaki) gameStats.nakiWinCount += 1;
+    
+                                    // Convert winner points and track the highest
+                                    const numericWinnerPoints = convertWinnerPoints(winner);
+                                    if (numericWinnerPoints > gameStats.maxWinPoints) {
+                                        gameStats.maxWinPoints = numericWinnerPoints;
+                                        gameStats.maxWinPointsDisplay = winner.winnerPoints;  // Store the display version
                                     }
-                                });
-                            }
-
+    
+                                    // Track selected roles
+                                    round.selectedRoles?.forEach((role) => {
+                                        if (gameStats.roles[role]) {
+                                            gameStats.roles[role] += 1;
+                                        } else {
+                                            gameStats.roles[role] = 1;
+                                        }
+                                    });
+                                }
+                            });
+    
+                            // Check if the member is the discarder
                             if (round.discarder === selectedMember) {
                                 gameStats.discardCount += 1;
                             }
                         });
                     }
-
+    
                     aggregatedStats.push(gameStats);
                 }
-
+    
                 setYourStats(aggregatedStats);
             } catch (error) {
                 console.error('Error fetching games:', error);
@@ -163,9 +165,11 @@ const DashboardScreen = () => {
                 setLoading(false); // データ取得後にローディング終了
             }
         };
-
+    
         fetchData();
     }, [selectedMember, selectedMemberName]);
+    
+    
 
 
     const handlePickerSelect = async (value) => {
@@ -185,7 +189,7 @@ const DashboardScreen = () => {
     };
 
     function convertWinnerPoints(round) {
-        if (!round.) {
+        if (!round.winnerPoints){
             return 0;
         }
         let winnerPoints = round.winnerPoints;

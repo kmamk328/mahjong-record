@@ -10,6 +10,7 @@ import { FAB } from 'react-native-paper';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import ContentLoader, { Rect } from 'react-content-loader/native';
 
 
 type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
@@ -106,7 +107,10 @@ useEffect(() => {
   }, [hanchan]);
 
   const fetchHanchanDetails = async () => {
+    setLoading(true);  // Set loading to true before fetching data
     try {
+      // Simulate a delay of 3 seconds (3000 milliseconds)
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       const roundsCollection = collection(db, 'games', hanchan.gameId, 'hanchan', hanchan.id, 'rounds');
       const roundsSnapshot = await getDocs(roundsCollection);
 
@@ -286,89 +290,139 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
-    <ScrollView style={styles.container}>
-      <View style={styles.gameBox}>
-        <Text style={styles.dateText}>{new Date(hanchan.createdAt.seconds * 1000).toLocaleDateString('ja-JP', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            })}
-        </Text>
-        <View style={styles.membersContainer}>
-          {hanchan.members && hanchan.members.map((member, index) => (
-            <Text key={index} style={styles.memberText}>{member}</Text>
-          ))}
-        </View>
-        {hanchanDetails.map((hanchanDetail, index) => (
-          <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
-            {hanchanDetail.rounds && hanchanDetail.rounds.map((round, idx) => (
-              <Swipeable
-              key={`${round.roundSeq}-${idx}`}
-              renderRightActions={() => (
-                <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(round.id)}>
-                  <Icon name="trash-2" size={24} color="white" />
-                </TouchableOpacity>
-              )}
+      <ScrollView style={styles.container}>
+        <View style={styles.gameBox}>
+          {loading ? (
+            <ContentLoader
+              speed={2}
+              width={300}
+              height={50}
+              viewBox="0 0 300 50"
+              backgroundColor="#f3f3f3"
+              foregroundColor="#ecebeb"
             >
-              <TouchableOpacity
-                key={`${round.roundSeq}-${idx}`}
-                style={styles.roundContainer}
-                onPress={() => handleRoundPress(round.id, round)}
-              >
-                <View style={styles.roundBox}>
-                  <Image
-                    source={imagePaths[idx % imagePaths.length]} // インデックスに基づいて画像を選択
-                    style={styles.imageStyle}
-                  />
-                  <View style={styles.textContainer}>
-                    <Text style={styles.roundText}>
-                      {round.roundNumber.place}場 {round.roundNumber.round}局 {round.roundNumber.honba}本場
+              <Rect x="0" y="0" rx="4" ry="4" width="300" height="20" />
+              {/* <Rect x="0" y="30" rx="4" ry="4" width="250" height="20" /> */}
+            </ContentLoader>
+          ) : (
+            <>
+              <View style={styles.dateContainer}>
+                <Text style={styles.dateText}>
+                  {new Date(hanchan.createdAt.seconds * 1000).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  })}
+                </Text>
+              </View>
+              <View style={styles.membersContainer}>
+                {hanchan.members &&
+                  hanchan.members.map((member, index) => (
+                    <Text key={index} style={styles.memberText}>
+                      {member}
                     </Text>
+                  ))}
+              </View>
+            </>
+          )}
 
-                    {round.isRyuukyoku ? (
-                      <View>
-                        <Text style={styles.roundText}>流局</Text>
-                        {round.tenpaiPlayers && round.tenpaiPlayers.map((player, idx) => (
-                          <Text key={idx} style={styles.tenpaiPlayerText}>
-                            聴牌した人: {player}
-                          </Text>
-                        ))}
-                      </View>
-                    ) : (
-                      <>
-                        {round.winners && round.winners.map((winner, idx) => (
-                          <View key={idx} style={styles.winnerContainer}>
-                            <Text style={styles.winnerNameText}>あがった人: {winner.winner}</Text>
-                            <Text style={styles.winnerPoints}>打点: {winner.winnerPoints}点</Text>
-                          </View>
-                        ))}
-
-                        <Text style={styles.discarderNameText}>放銃した人: {round.discarderName}</Text>
-                      </>
+          {loading ? (
+            <>
+              {[1].map((_, index) => (
+                <ContentLoader
+                  key={index}
+                  speed={2}
+                  width={400}
+                  height={100}
+                  viewBox="0 0 400 100"
+                  backgroundColor="#f3f3f3"
+                  foregroundColor="#ecebeb"
+                >
+                  <Rect x="0" y="0" rx="4" ry="4" width="300" height="70" />
+                </ContentLoader>
+              ))}
+            </>
+          ) : (
+            hanchanDetails.map((hanchanDetail, index) => (
+              <View key={`${hanchanDetail.id}-${index}`} style={styles.hanchanBox}>
+                {hanchanDetail.rounds.map((round, idx) => (
+                  <Swipeable
+                    key={`${round.roundSeq}-${idx}`}
+                    renderRightActions={() => (
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => onDelete(round.id)}
+                      >
+                        <Icon name="trash-2" size={24} color="white" />
+                      </TouchableOpacity>
                     )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </Swipeable>
-            ))}
-          </View>
-        ))}
-      </View>
-    </ScrollView>
-      <FAB
-      style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
-      small
-      icon="plus"
-      onPress={handleAddRound}
-    />
-  </View>
+                  >
+                    <TouchableOpacity
+                      key={`${round.roundSeq}-${idx}`}
+                      style={styles.roundContainer}
+                    >
+                      <View style={styles.roundBox}>
+                        <Image
+                          source={imagePaths[idx % imagePaths.length]}
+                          style={styles.imageStyle}
+                        />
+                        <View style={styles.textContainer}>
+                          <Text style={styles.roundText}>
+                            {round.roundNumber.place}場 {round.roundNumber.round}局{' '}
+                            {round.roundNumber.honba}本場
+                          </Text>
+
+                          {round.isRyuukyoku ? (
+                            <View>
+                              <Text style={styles.roundText}>流局</Text>
+                              {round.tenpaiPlayers &&
+                                round.tenpaiPlayers.map((player, idx) => (
+                                  <Text key={idx} style={styles.tenpaiPlayerText}>
+                                    聴牌した人: {player}
+                                  </Text>
+                                ))}
+                            </View>
+                          ) : (
+                            <>
+                              {round.winners &&
+                                round.winners.map((winner, idx) => (
+                                  <View key={idx} style={styles.winnerContainer}>
+                                    <Text style={styles.winnerNameText}>
+                                      あがった人: {winner.winner}
+                                    </Text>
+                                    <Text style={styles.winnerPoints}>
+                                      打点: {winner.winnerPoints}
+                                    </Text>
+                                  </View>
+                                ))}
+                              {round.discarderName ? (
+                                <Text style={styles.discarderNameText}>
+                                  放銃した人: {round.discarderName}
+                                </Text>
+                              ) : null}
+                            </>
+                          )}
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </Swipeable>
+                ))}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+      <FAB style={[styles.fab, { backgroundColor: '#f0f8ff' }]} small icon="plus" />
+    </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 6,
+    marginTop: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -377,9 +431,9 @@ const styles = StyleSheet.create({
   },
   gameBox: {
     flex: 1,
-    marginTop: 8,
+    marginTop: 1,
     marginBottom: 8,
-    padding: 16,
+    padding: 0,
     backgroundColor: '#fff',
     borderRadius: 8,
     shadowColor: '#000',
@@ -387,6 +441,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+  },
+  dateContainer: {
+    marginTop: 16,
+    marginBottom: 0,
+    padding: 10,
   },
   dateText: {
     fontSize: 16,
