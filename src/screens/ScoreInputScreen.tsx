@@ -46,15 +46,13 @@ const ScoreInputScreen = () => {
     uraDora: 0,
     roundSeq: 0,
   });
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [pickerType, setPickerType] = useState('');
-  const [availablePoints, setAvailablePoints] = useState<(string | number)[]>([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const [availablePoints, setAvailablePoints] = useState<(string | number)[][]>([]);
   const [filteredPoints, setFilteredPoints] = useState([1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const navigation = useNavigation();
   const route = useRoute();
-  // const { gameId } = route.params;
-  // const { gameId, roundId, roundData } = route.params; // roundIdを受け取る
   const { gameId, hanchanId, roundId, roundData } = route.params;
   const [rolesOptions, setRolesOptions] = useState([
     { role: 'リーチ', points: 1 },
@@ -97,7 +95,7 @@ const ScoreInputScreen = () => {
   const [previousRoundInfo, setPreviousRoundInfo] = useState('開局');
   const [previousRound, setPreviousRound] = useState(null);
   const [nextRound, setNextRound] = useState(null);
-  // const [hanchanId, setHanchanId] = useState<string | null>(null);
+
   const [winners, setWinners] = useState([
     {
       winner: '',
@@ -138,11 +136,11 @@ const ScoreInputScreen = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       const gameDoc = await getDoc(doc(db, 'games', gameId));
-      const memberIds = gameDoc.data().members;
+      const memberIds = gameDoc.data()?.members || [];
       const memberNames = [];
       for (const memberId of memberIds) {
         const memberDoc = await getDoc(doc(db, 'members', memberId));
-        memberNames.push({ id: memberId, name: memberDoc.data().name });
+        memberNames.push({ id: memberId, name: memberDoc.data()?.name || '' });
       }
       setMembers(memberNames);
     };
@@ -153,7 +151,6 @@ const ScoreInputScreen = () => {
       const hanchanSnapshot = await getDocs(query(hanchanCollection, orderBy('createdAt', 'desc')));
       if (!hanchanSnapshot.empty) {
         const latestHanchan = hanchanSnapshot.docs[0];
-        // setHanchanId(latestHanchan.id);
         const roundsCollection = collection(db, 'games', gameId, 'hanchan', latestHanchan.id, 'rounds');
         const roundsSnapshot = await getDocs(query(roundsCollection, orderBy('roundSeq', 'desc')));
         if (!roundsSnapshot.empty) {
@@ -165,7 +162,6 @@ const ScoreInputScreen = () => {
       } else {
         const newHanchanRef = await addDoc(hanchanCollection, { createdAt: new Date() });
         console.log("New Hanchan created with ID(fetchHanchan):", newHanchanRef.id, "at", new Date().toLocaleString());
-        // setHanchanId(newHanchanRef.id);
         setRoundSeq(1);
       }
     };
@@ -182,60 +178,6 @@ const ScoreInputScreen = () => {
     }
   }, [roundId]);
 
-  // const handlePickerChange = (value, index) => {
-  //   setModalVisible(false);
-  //   if (pickerType === 'winner' && selectedWinnerIndex !== null) {
-  //     const updatedWinners = [...winners];
-  //     updatedWinners[selectedWinnerIndex].winner = value; // 選択された名前を更新
-  //     setWinners(updatedWinners);
-  //   } else if (pickerType === 'winnerPoints' && selectedWinnerIndex !== null) {
-  //     const updatedWinners = [...winners];
-  //     updatedWinners[selectedWinnerIndex].winnerPoints = value; // あがり点を更新
-  //     setWinners(updatedWinners);
-  //   } else if (pickerType === 'tenpai' && selectedTenpaiIndex !== null) {
-  //     const updatedTenpaiPlayers = [...tenpaiPlayers];
-  //     updatedTenpaiPlayers[selectedTenpaiIndex] = value;
-  //     setTenpaiPlayers(updatedTenpaiPlayers);
-  //   } else {
-  //     switch (pickerType) {
-  //       case 'place':
-  //         setCurrentRound({
-  //           ...currentRound,
-  //           roundNumber: { ...currentRound.roundNumber, place: value },
-  //         });
-  //         break;
-  //       case 'round':
-  //         setCurrentRound({
-  //           ...currentRound,
-  //           roundNumber: { ...currentRound.roundNumber, round: value },
-  //         });
-  //         break;
-  //       case 'honba':
-  //         setCurrentRound({
-  //           ...currentRound,
-  //           roundNumber: { ...currentRound.roundNumber, honba: value },
-  //         });
-  //         break;
-  //       case 'winner':
-  //         setCurrentRound({ ...currentRound, winner: value });
-  //         break;
-  //       case 'discarder':
-  //         setCurrentRound({ ...currentRound, discarder: value });
-  //         break;
-  //       case 'winnerPoints':
-  //         setCurrentRound({ ...currentRound, winnerPoints: value });
-  //         break;
-  //       case 'dora':
-  //         setCurrentRound({ ...currentRound, dora: value });
-  //         break;
-  //       case 'uraDora':
-  //         setCurrentRound({ ...currentRound, uraDora: value });
-  //         break;
-  //       default:
-  //         break;
-  //     }
-  //   }
-  // };
 // モーダルが開かれた時に `selectedTempValue` を初期化する
 useEffect(() => {
   if (modalVisible) {
@@ -260,6 +202,20 @@ useEffect(() => {
     }
   }
 }, [modalVisible, pickerType, selectedWinnerIndex, selectedTenpaiIndex, currentRound, winners, tenpaiPlayers]);
+
+// モーダルが開かれた時に `selectedTempValue` を初期化する
+useEffect(() => {
+  if (modalVisible) {
+    if (pickerType === 'winner' && members.length > 0) {
+      setSelectedTempValue(members[0].name); // 初期値を設定
+    }else if (pickerType === 'winnerPoints' && availablePoints.length > 0) {
+      const points = availablePoints[selectedWinnerIndex ?? 0];
+      setSelectedTempValue(Array.isArray(points) && points.length > 0 ? points[0].toString() : '');
+    }else if (pickerType === 'discarder' && members.length > 0) {
+      setSelectedTempValue(members[0].name); // 最初の放銃者を設定
+    }
+  }
+}, [modalVisible, pickerType, members]);
 
   // OKボタンが押された際に値を反映させる
   const handleApplyPickerChange = () => {
@@ -322,9 +278,9 @@ useEffect(() => {
       setAvailablePoints((prevPoints) => {
         const newPoints = [...prevPoints];
         newPoints[index] = points; // 特定のwinnerに対してポイントを更新
-        console.log("index",index);
-        console.log("prevPoints",prevPoints);
-        console.log("newPoints[index]",newPoints[index]);
+        // console.log("index",index);
+        // console.log("prevPoints",prevPoints);
+        // console.log("newPoints[index]",newPoints[index]);
         return newPoints;
       });
     });
@@ -385,7 +341,7 @@ useEffect(() => {
         5800, 6400, 7100, 7700, 8000, 12000, 16000, 24000, 32000, 64000
       ];
     }
-    console.log("points",points);
+    // console.log("points",points);
     return points;
   };
 
@@ -781,7 +737,7 @@ const handleNext = async () => {
           <>
             <View>
             <View style={styles.tenpaiHeader}>
-              <Text style={styles.discarderLabel}>あがった人を選択してください</Text>
+              <Text style={styles.discarderLabel}>あがった人のデータを入力してください</Text>
               <TouchableOpacity onPress={addWinnerPicker}>
                 <MaterialCommunityIcons name="plus-circle" size={24} color="green" />
               </TouchableOpacity>
@@ -932,7 +888,7 @@ const handleNext = async () => {
                 ))}
             </Picker>
             <Button title="OK" onPress={handleApplyPickerChange} />
-            <Button title="閉じる" onPress={() => setModalVisible(false)} />
+            {/* <Button title="閉じる" onPress={() => setModalVisible(false)} /> */}
           </View>
         </View>
       </Modal>

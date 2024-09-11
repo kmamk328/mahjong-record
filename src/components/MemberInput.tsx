@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'; // Ensure you have installed @exp
 const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, label }) => {
   const [isCustomInput, setIsCustomInput] = useState(false);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
-  const [tempValue, setTempValue] = useState(value); // 仮選択用の値
+  const [tempValue, setTempValue] = useState(''); // 仮選択用の値
 
   useEffect(() => {
     if (reset) {
@@ -19,7 +19,7 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, lab
     if (itemValue === 'custom') {
       setIsCustomInput(true);
       setTempValue(''); // カスタム入力に切り替えた場合は空にする
-    } else if (itemValue === '') {
+    } else if (itemValue === null || itemValue === undefined) { // nullまたはundefinedをチェック
       setIsCustomInput(false); // 空白を選択した場合、カスタム入力にしない
       setTempValue(''); // 空白にする
     } else {
@@ -29,9 +29,16 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, lab
   };
 
   const applyPickerSelection = () => {
-    onChange(tempValue); // 選択した値を確定
+    // tempValueが空白やnullの場合、"custom"を設定
+    if (!tempValue || tempValue === null) {
+      setIsCustomInput(true); // 新規入力に切り替える
+      onChange(''); // 空の入力フィールドに切り替える
+    } else {
+      onChange(tempValue); // 選択した値を確定
+    }
     setIsPickerVisible(false); // モーダルを閉じる
   };
+  
 
   const showPicker = () => {
     setIsPickerVisible(true);
@@ -62,11 +69,12 @@ const MemberInput = ({ existingMembers, onChange, value, placeholder, reset, lab
         <View style={styles.modalContainer}>
           <View style={styles.pickerContainer}>
             <Picker
-              selectedValue={tempValue}
+              selectedValue={tempValue || "custom"}
               onValueChange={handlePickerChange}
             >
-              {/* <Picker.Item label="" value="" /> */}
-              <Picker.Item label="新たに入力" value="custom" />
+              {/* <Picker.Item label="新規入力" value="custom" /> */}
+              {/* <Picker.Item label=" " value={null} /> */}
+              <Picker.Item label="新規入力" value="custom" />
               {existingMembers.map((member, index) => (
                 <Picker.Item key={index} label={member} value={member} />
               ))}
