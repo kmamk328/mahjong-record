@@ -44,6 +44,9 @@ target 'majangrecord' do
   # Use modular headers for compatibility with GoogleUtilities
   use_modular_headers!
 
+  # Add Google-Mobile-Ads-SDK for AdMob integration
+  pod 'Google-Mobile-Ads-SDK'
+
   # Adjust ReactCommon to avoid conflicts
   #pod 'ReactCommon', :path => '../node_modules/react-native/ReactCommon'
   #pod 'React-RuntimeApple', :path => '../node_modules/react-native/ReactCommon/runtime'

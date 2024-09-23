@@ -37,12 +37,20 @@
     "plugins": [
       "@react-native-google-signin/google-signin",
       "react-native-google-mobile-ads",
-      "expo-build-properties",
+      [
+        "expo-build-properties",
         {
           "ios": {
             "useFrameworks": "static"
           }
         }
-    ]
+      ]
+
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "74f2f182-3f5d-48fb-9821-0f68f23c0b39"
+      }
+    }
   }
 }
