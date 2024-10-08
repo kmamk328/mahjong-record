@@ -1,1 +1,1 @@
-# mahjoßng-record
+# mahjong-record
