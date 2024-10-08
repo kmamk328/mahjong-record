@@ -1,1 +1,1 @@
-# majang-record
+# mahjoßng-record
