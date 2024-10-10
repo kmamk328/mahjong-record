@@ -27,9 +27,19 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+Pods/
+
+# Windows
+*.exe
+*.dll
 
 # local env files
 .env*.local
+GoogleSigninConfig.ts
+firebaseConfig.ts
 
 # typescript
 *.tsbuildinfo
+
+# others
+memo*.*
