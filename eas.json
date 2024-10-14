@@ -21,6 +21,7 @@
       "autoIncrement": true
     },
     "development-simulator": {
+      "extends":"development",
       "developmentClient": true,
       "distribution": "internal",
       "ios": {

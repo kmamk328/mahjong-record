@@ -1,6 +1,8 @@
 // require('dotenv').config();
-import React from 'react';
 import 'react-native-gesture-handler';
+
+import React, { useState, useRef } from 'react';
+import { Platform } from 'react-native';
 import 'regenerator-runtime/runtime';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
@@ -29,7 +31,6 @@ import TestScreen from './src/screens/TestScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
 
 const auth = getAuth();
 signInAnonymously(auth)

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, RefreshControl, Alert, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 import { collection, getDocs, doc, getDoc, query, orderBy, startAfter, limit, deleteDoc, where } from 'firebase/firestore';
@@ -9,6 +9,7 @@ import { Image } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ContentLoader, { Rect } from 'react-content-loader/native'; // スケルトンUI用のライブラリ
+import { BannerAd, BannerAdSize, TestIds, useForeground } from 'react-native-google-mobile-ads';
 
 const InquireScreen = () => {
     const navigation = useNavigation();
@@ -29,6 +30,20 @@ const InquireScreen = () => {
         require('../image/pin_8.png'),
         require('../image/pin_9.png'),
     ];
+    const bannerRef = useRef<BannerAd>(null);
+
+    const adUnitId = __DEV__
+    ? TestIds.ADAPTIVE_BANNER
+    : Platform.OS === 'ios'
+      ? 'ca-app-pub-3940256099942544/2934735716'  // iOSのテストID
+      : 'ca-app-pub-3940256099942544/6300978111'; // AndroidのテストID
+
+    useForeground(() => {
+    if (Platform.OS === 'ios') {
+        bannerRef.current?.load();
+    }
+    });
+
 
     const fetchData = async (loadMore = false) => {
         try {
@@ -181,7 +196,7 @@ const InquireScreen = () => {
                     {loading ? (
                         <>
                             {[1, 2, 3].map((_, index) => (
-                                <ContentLoader 
+                                <ContentLoader
                                     key={index}
                                     speed={2}
                                     width={400}
@@ -231,7 +246,7 @@ const InquireScreen = () => {
                     )}
                     {isFetchingMore && (
                         <View style={styles.loadingMoreContainer}>
-                            <ContentLoader 
+                            <ContentLoader
                                 speed={2}
                                 width={400}
                                 height={70}
@@ -250,6 +265,11 @@ const InquireScreen = () => {
                 style={[styles.fab, { backgroundColor: '#f0f8ff' }]}
                 small icon="plus"
                 onPress={handleAddGame}
+            />
+            <BannerAd
+                ref={bannerRef}
+                unitId={adUnitId}
+                size={BannerAdSize.FULL_BANNER}
             />
         </View>
     );
