@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import AdBanner from '../components/AdBanner';
 
 
-const FAQScreen: React.FC = () => {
+const TermsOfUseScreen: React.FC = () => {
 
     const navigation = useNavigation();
 
@@ -14,7 +14,7 @@ const FAQScreen: React.FC = () => {
                 backgroundColor: '#FFFFFF',
             },
             headerTintColor: '#000',
-            headerTitle: 'よくある質問',
+            headerTitle: '利用規約',
             headerTitleAlign: 'center',
         });
     }, [navigation]);
@@ -52,4 +52,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default FAQScreen;
+export default TermsOfUseScreen;

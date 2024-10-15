@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import ContentLoader, { Rect } from 'react-content-loader/native';
 import { db, auth } from '../../firebaseConfig';
+import AdBanner from '../components/AdBanner';
+
+import { BannerAd, BannerAdSize, TestIds, useForeground } from 'react-native-google-mobile-ads';
+
 
 const DashboardScreen = () => {
     const navigation = useNavigation();
@@ -15,6 +19,8 @@ const DashboardScreen = () => {
     const [members, setMembers] = useState([]); // 全メンバーを保存
     const [modalVisible, setModalVisible] = useState(false);
     const [loading, setLoading] = useState(false); // デフォルトはfalse、ロード中のみtrueにする
+
+
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -272,6 +278,7 @@ const DashboardScreen = () => {
                     )}
                 </View>
             </ScrollView>
+            <AdBanner />
             <Modal
                 visible={modalVisible}
                 transparent={true}

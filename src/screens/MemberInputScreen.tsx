@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import { collection, doc, setDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig'; // Firebase authentication instance
 import MemberInput from '../components/MemberInput';
+import AdBanner from '../components/AdBanner';
+
 
 const MemberInputScreen = ({ route }) => {
   const { gameId } = route.params || {};
@@ -117,6 +119,7 @@ const MemberInputScreen = ({ route }) => {
   };
 
   return (
+    <View style={styles.container}>
     <ScrollView style={styles.container}>
       <View style={styles.memberInputBox}>
         <Text style={styles.getTitleText}>メンバーを入力してください</Text>
@@ -141,6 +144,9 @@ const MemberInputScreen = ({ route }) => {
         </View>
       </View>
     </ScrollView>
+    <AdBanner />
+    </View>
+
   );
 };
 

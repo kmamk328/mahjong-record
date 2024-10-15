@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import AdBanner from '../components/AdBanner';
 
 const SettingScreen: React.FC = () => {
 
@@ -24,11 +25,17 @@ const SettingScreen: React.FC = () => {
 
     return (
         <View style={styles.container}>
+        <View style={styles.container}>
             <TouchableOpacity onPress={handleMemberManagementPress} style={styles.listItem}>
                 <Text style={styles.listItemText}>メンバー管理</Text>
                 <Icon name="chevron-right" size={24} color="#000" />
             </TouchableOpacity>
+
         </View>
+        <AdBanner />
+         </View>
+
+
         );
 };
 

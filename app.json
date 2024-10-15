@@ -13,8 +13,10 @@
     },
     "jsEngine": "jsc",
     "ios": {
+      "buildNumber": "1.0.0",
       "supportsTablet": true,
-      "bundleIdentifier": "com.kmamk328.mahjongrecord"
+      "bundleIdentifier": "com.kmamk328.mahjongrecord",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {

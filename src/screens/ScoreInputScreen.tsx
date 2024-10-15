@@ -17,6 +17,8 @@ import { Picker } from '@react-native-picker/picker';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { FAB } from 'react-native-paper'; // Floating Action Button
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AdBanner from '../components/AdBanner';
+
 
 type RootStackParamList = {
   ScoreInput: { gameId: string };
@@ -900,6 +902,8 @@ const handleNext = async () => {
       icon={() => <MaterialCommunityIcons name="content-save" size={24} color="#000" />}
       onPress={confirmSave}
     />
+    <AdBanner />
+
     </View>
   );
 };
@@ -999,7 +1003,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 0,
+    bottom: 80,
   },
   tenpaiHeader: {
     flexDirection: 'row',

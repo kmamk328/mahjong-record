@@ -12,6 +12,9 @@ import Icon from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ContentLoader, { Rect } from 'react-content-loader/native';
 
+import AdBanner from '../components/AdBanner';
+
+
 
 type GameDetailsScreenRouteProp = RouteProp<RootStackParamList, 'GameDetails'>;
 
@@ -200,7 +203,7 @@ useEffect(() => {
         const db = getFirestore();
         const hanchanRef = doc(db, 'games', hanchan.gameId, 'hanchan', hanchan.id);
         const roundsCollection = collection(hanchanRef, 'rounds');
-        
+
         // 新しいラウンド情報の作成（初期値）
         const newRound = {
             roundNumber: { place: '東', round: '1', honba: '0' },
@@ -213,7 +216,7 @@ useEffect(() => {
 
         // Firestore に新しいラウンドを追加
         const newRoundRef = await addDoc(roundsCollection, newRound);
-        
+
         // 追加された新しいラウンドの ID を取得
         const newRoundId = newRoundRef.id;
 
@@ -419,6 +422,8 @@ useEffect(() => {
       icon="plus"
       onPress={handleAddRound}
     />
+    <AdBanner />
+
     </View>
   );
 };
@@ -512,7 +517,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 0,
+    bottom: 80,
   },
   imageStyle: {
     width: 60,              // 画像の幅

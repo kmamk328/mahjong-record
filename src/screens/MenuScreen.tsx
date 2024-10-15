@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView} from 'react-native';
+import AdBanner from '../components/AdBanner';
+
 
 const MenuScreen = ({ navigation }) => {
 
@@ -15,6 +18,7 @@ const MenuScreen = ({ navigation }) => {
   }, [navigation]);
   return (
     <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.gridContainer}>
         {/* <TouchableOpacity style={[styles.menuItem, styles.premium]} onPress={() => navigation.navigate('Premium')}>
           <Text style={styles.menuTitle}>プレミアム</Text>
@@ -49,17 +53,21 @@ const MenuScreen = ({ navigation }) => {
           <Text style={styles.menuTitle}>アプリ情報</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
         </TouchableOpacity>
-{/*
-        <TouchableOpacity style={[styles.menuItem, styles.terms]} onPress={() => navigation.navigate('Terms')}>
+
+        {/* <TouchableOpacity style={[styles.menuItem, styles.terms]} onPress={() => navigation.navigate('TermsOfUse')}>
           <Text style={styles.menuTitle}>利用規約</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <TouchableOpacity style={[styles.menuItem, styles.privacyPolicy]} onPress={() => navigation.navigate('PrivacyPolicy')}>
+        {/* <TouchableOpacity style={[styles.menuItem, styles.privacyPolicy]} onPress={() => navigation.navigate('PrivacyPolicy')}>
           <Text style={styles.menuTitle}>プライバシーポリシー</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
         </TouchableOpacity> */}
       </View>
+
+
+    </ScrollView>
+    <AdBanner />
     </View>
   );
 };
@@ -113,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6347',
   },
   terms: {
-    backgroundColor: '#D3D3D3',
+    backgroundColor: '#1E90FF',
   },
   privacyPolicy: {
     backgroundColor: '#87CEFA',

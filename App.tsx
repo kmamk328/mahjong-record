@@ -9,6 +9,7 @@ import { createStackNavigator, TransitionPresets } from '@react-navigation/stack
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import * as Analytics from 'expo-firebase-analytics';
 
 import MemberInputScreen from './src/screens/MemberInputScreen';
 import ScoreInputScreen from './src/screens/ScoreInputScreen';
@@ -24,6 +25,7 @@ import InquiryScreen from './src/screens/InquiryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AppInfoScreen from './src/screens/AppInfoScreen';
 import NoticeScreen from './src/screens/NoticeScreen';
+import TermsOfUseScreen from './src/screens/TermsOfUseScreen';
 import MemberManagementScreen from './src/screens/MemberManagementScreen';
 import TestScreen from './src/screens/TestScreen';
 
@@ -31,6 +33,14 @@ import TestScreen from './src/screens/TestScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+React.useEffect(() => {
+  // イベントをログに記録するサンプル
+  Analytics.logEvent('app_open', {
+    screen: 'Main',
+    purpose: 'User opened the app',
+  });
+}, []);
 
 const auth = getAuth();
 signInAnonymously(auth)
@@ -86,6 +96,7 @@ function MenuStackNavigator() {
         <Stack.Screen name="Notice" component={NoticeScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="AppInfo" component={AppInfoScreen} />
+        <Stack.Screen name="TermsOfUse" component={TermsOfUseScreen} />
         <Stack.Screen name="MemberManagement" component={MemberManagementScreen} />
       </Stack.Navigator>
   );

@@ -8,6 +8,8 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Icon from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ContentLoader, { Rect } from 'react-content-loader/native'; // スケルトンUIを作成するためのライブラリ
+import AdBanner from '../components/AdBanner';
+
 
 const HanchanListScreen = ({ route }) => {
   const { gameId } = route.params;
@@ -204,6 +206,7 @@ const HanchanListScreen = ({ route }) => {
       small icon="plus"
       onPress={handleAddRound}
     />
+    <AdBanner />
     </View>
   );
 };
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 0,
+    bottom: 80,
   },
   imageStyle: {
     width: 60,

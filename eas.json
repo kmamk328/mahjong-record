@@ -18,7 +18,10 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "ios": {
+        "autoIncrement": true,
+        "googleServicesFile": "./GoogleService-Info.plist"
+      }
     },
     "development-simulator": {
       "extends":"development",

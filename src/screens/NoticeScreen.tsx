@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Button } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import AdBanner from '../components/AdBanner';
+
 
 const InquiryScreen: React.FC = () => {
 
@@ -24,6 +26,8 @@ const InquiryScreen: React.FC = () => {
                 <Text style={styles.text}>お知らせあり次第掲載いたします。</Text>
             </View>
             </ScrollView>
+            <AdBanner />
+
         </View>
 
 
