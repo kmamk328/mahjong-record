@@ -49,15 +49,15 @@ const MenuScreen = ({ navigation }) => {
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.menuItem, styles.appInfo]} onPress={() => navigation.navigate('AppInfo')}>
+        {/* <TouchableOpacity style={[styles.menuItem, styles.appInfo]} onPress={() => navigation.navigate('AppInfo')}>
           <Text style={styles.menuTitle}>アプリ情報</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        {/* <TouchableOpacity style={[styles.menuItem, styles.terms]} onPress={() => navigation.navigate('TermsOfUse')}>
+        <TouchableOpacity style={[styles.menuItem, styles.terms]} onPress={() => navigation.navigate('TermsOfUse')}>
           <Text style={styles.menuTitle}>利用規約</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
 
         {/* <TouchableOpacity style={[styles.menuItem, styles.privacyPolicy]} onPress={() => navigation.navigate('PrivacyPolicy')}>
           <Text style={styles.menuTitle}>プライバシーポリシー</Text>
