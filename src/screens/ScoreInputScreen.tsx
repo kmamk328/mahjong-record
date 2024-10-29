@@ -163,7 +163,7 @@ const ScoreInputScreen = () => {
         }
       } else {
         const newHanchanRef = await addDoc(hanchanCollection, { createdAt: new Date() });
-        console.log("New Hanchan created with ID(fetchHanchan):", newHanchanRef.id, "at", new Date().toLocaleString());
+        // console.log("New Hanchan created with ID(fetchHanchan):", newHanchanRef.id, "at", new Date().toLocaleString());
         setRoundSeq(1);
       }
     };
@@ -271,10 +271,10 @@ useEffect(() => {
 
   useEffect(() => {
     winners.forEach((winner, index) => {
-      console.log("--------------------------" );
-      console.log("useEffect winner index:",index );
-      console.log("useEffect winner.isOya:",winner.isOya );
-      console.log("useEffect winner.isTsumo:",winner.isTsumo );
+      // console.log("--------------------------" );
+      // console.log("useEffect winner index:",index );
+      // console.log("useEffect winner.isOya:",winner.isOya );
+      // console.log("useEffect winner.isTsumo:",winner.isTsumo );
       const points = updateAvailablePointsForWinner(winner.isOya, winner.isTsumo);
       // ここで各winnerごとに異なる選択肢を設定します
       setAvailablePoints((prevPoints) => {
@@ -354,7 +354,7 @@ useEffect(() => {
 
     // 個別の親とツモの状態に基づいてポイントを計算
     const newPoints = updateAvailablePointsForWinner(value, updatedWinners[index].isTsumo);
-    console.log("Oya newPoints",newPoints);
+    // console.log("Oya newPoints",newPoints);
     setAvailablePoints(newPoints);  // 選択肢を更新
   };
 
@@ -365,7 +365,7 @@ useEffect(() => {
 
     // 個別の親とツモの状態に基づいてポイントを計算
     const newPoints = updateAvailablePointsForWinner(updatedWinners[index].isOya, value);
-    console.log("Tsumo newPoints",newPoints);
+    // console.log("Tsumo newPoints",newPoints);
     setAvailablePoints(newPoints);  // 選択肢を更新
   };
 
@@ -402,17 +402,17 @@ const handleNext = async () => {
   try {
     const currentUser = auth.currentUser?.uid;
 
-    console.log('gameId:', gameId);
-    console.log('hanchanId:', hanchanId);
-    console.log('roundId:', roundId);
-    console.log('currentRound:', currentRound);
-    console.log('selectedRoles:', selectedRoles);
-    console.log('roundSeq:', roundSeq);
+    // console.log('gameId:', gameId);
+    // console.log('hanchanId:', hanchanId);
+    // console.log('roundId:', roundId);
+    // console.log('currentRound:', currentRound);
+    // console.log('selectedRoles:', selectedRoles);
+    // console.log('roundSeq:', roundSeq);
 
     if (roundId) {
       // 既存のラウンド情報を更新
       const roundRef = doc(db, 'games', gameId, 'hanchan', hanchanId, 'rounds', roundId);
-      console.log('Updating round with ID:', roundId);
+      // console.log('Updating round with ID:', roundId);
       await updateDoc(roundRef, {
         ...currentRound,
         roles: selectedRoles,
@@ -421,11 +421,11 @@ const handleNext = async () => {
         winners,
         // createdUser: currentUser,
       });
-      console.log('Round updated successfully');
+      // console.log('Round updated successfully');
     } else {
       // 新規ラウンドを追加
       const roundsRef = collection(db, 'games', gameId, 'hanchan', hanchanId, 'rounds');
-      console.log('Creating new round in game:', gameId, 'and hanchan:', hanchanId);
+      // console.log('Creating new round in game:', gameId, 'and hanchan:', hanchanId);
       const newRoundRef = await addDoc(roundsRef, {
         ...currentRound,
         isTsumo: currentRound.isTsumo,
@@ -443,7 +443,7 @@ const handleNext = async () => {
         winners,
         // createdUser: currentUser,
       });
-      console.log("New Round created with ID:", newRoundRef.id, "at", new Date().toLocaleString());
+      // console.log("New Round created with ID:", newRoundRef.id, "at", new Date().toLocaleString());
     }
 
     // 勝者のポイント更新
@@ -451,11 +451,11 @@ const handleNext = async () => {
       const winnerRef = doc(db, 'members', currentRound.winner);
       const winnerDoc = await getDoc(winnerRef);
       if (winnerDoc.exists()) {
-        console.log('Updating points for winner:', currentRound.winner);
+        // console.log('Updating points for winner:', currentRound.winner);
         await updateDoc(winnerRef, {
           totalPoints: winnerDoc.data().totalPoints + parseInt(currentRound.winnerPoints, 10),
         });
-        console.log('Winner points updated');
+        // console.log('Winner points updated');
       }
     }
 
@@ -464,11 +464,11 @@ const handleNext = async () => {
       const discarderRef = doc(db, 'members', currentRound.discarder);
       const discarderDoc = await getDoc(discarderRef);
       if (discarderDoc.exists()) {
-        console.log('Updating points for discarder:', currentRound.discarder);
+        // console.log('Updating points for discarder:', currentRound.discarder);
         await updateDoc(discarderRef, {
           totalPoints: discarderDoc.data().totalPoints - parseInt(currentRound.discarderPoints, 10),
         });
-        console.log('Discarder points updated');
+        // console.log('Discarder points updated');
       }
     }
 
@@ -609,7 +609,7 @@ const handleNext = async () => {
     setSelectedWinnerIndex(null);  // Reset the selected winner index
     setSelectedTenpaiIndex(null);  // Reset the selected tenpai index
 
-    console.log('Form reset for the next round');
+    // console.log('Form reset for the next round');
   };
 
   const confirmSave = () => {

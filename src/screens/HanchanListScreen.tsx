@@ -96,7 +96,7 @@ const HanchanListScreen = ({ route }) => {
 
   const handleHanchanPress = (hanchan) => {
     try {
-        console.log("hanchanListScreen hanchan:", hanchan);
+        // console.log("hanchanListScreen hanchan:", hanchan);
         if (!hanchan || !hanchan.createdAt) {
             throw new Error("Invalid hanchan data");
         }
@@ -107,7 +107,7 @@ const HanchanListScreen = ({ route }) => {
         ...hanchan,
         members: hanchan.members || [],
     };
-      console.log("safeHanchan object to be passed:", safeHanchan);
+      // console.log("safeHanchan object to be passed:", safeHanchan);
 
       navigation.navigate('GameDetails', { hanchan: safeHanchan });
     } catch (error) {

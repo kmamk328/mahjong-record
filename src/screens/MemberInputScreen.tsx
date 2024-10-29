@@ -35,7 +35,7 @@ const MemberInputScreen = ({ route }) => {
       const membersSnapshot = await getDocs(q);
       const membersList = membersSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
       setExistingMembers(membersList);
-      console.log("保存されているメンバー:", membersList);
+      // console.log("保存されているメンバー:", membersList);
     };
 
     fetchMembers();
@@ -87,7 +87,7 @@ const MemberInputScreen = ({ route }) => {
       if (member === '') continue;
 
       const existingMember = existingMembers.find(existingMember => existingMember.name === member);
-      console.log("existingMember:", existingMember);
+      // console.log("existingMember:", existingMember);
       if (existingMember) {
         memberIds.push(existingMember.id);
       } else {

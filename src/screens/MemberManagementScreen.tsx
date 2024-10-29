@@ -7,6 +7,9 @@ import Icon from 'react-native-vector-icons/Feather';
 import { getFirestore, collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 
+import AdBanner from '../components/AdBanner';
+
+
 const MemberManagementScreen = () => {
     const navigation = useNavigation();
     const [members, setMembers] = useState([]);
@@ -71,6 +74,8 @@ const MemberManagementScreen = () => {
                 </Swipeable>
                 ))}
             </ScrollView>
+            <AdBanner />
+
             </View>
         );
 };

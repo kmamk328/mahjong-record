@@ -49,7 +49,7 @@ const DashboardScreen = () => {
                 id: doc.id,
                 name: doc.data().name,
             }));
-            console.log('DashBoardScreen membersList: ', membersList);
+            // console.log('DashBoardScreen membersList: ', membersList);
             setMembers(membersList);
         } catch (error) {
             console.error('Error fetching members: ', error);

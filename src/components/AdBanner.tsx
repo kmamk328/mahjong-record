@@ -7,10 +7,13 @@ const AdBanner = () => {
 
     // テスト用の広告ユニットIDを設定
     const adUnitId = __DEV__
-        ? TestIds.ADAPTIVE_BANNER // 開発中はテストIDを使用
-        : Platform.OS === 'ios'
-        ? 'ca-app-pub-3940256099942544/2934735716'  // iOSの本番用広告ユニットID
-        : 'ca-app-pub-3940256099942544/6300978111'; // Androidの本番用広告ユニットID
+    ? (Platform.OS === 'ios'
+        ? 'ca-app-pub-3940256099942544/2934735716'  // iOSの開発用テストID
+        : TestIds.ADAPTIVE_BANNER)                  // AndroidのテストID
+    : (Platform.OS === 'ios'
+        ? 'ca-app-pub-5588665107660339/7933010772'  // iOSの本番用広告ユニットID
+        : 'ca-app-pub-5588665107660339/1234567890'); // Androidの本番用広告ユニットID
+
 
     // iOSではアプリがフォアグラウンドに戻るときに広告を再読み込み
     useForeground(() => {

@@ -11,7 +11,7 @@ import { createStackNavigator, TransitionPresets } from '@react-navigation/stack
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as Analytics from 'expo-firebase-analytics';
+// import * as Analytics from 'expo-firebase-analytics';
 
 import MemberInputScreen from './src/screens/MemberInputScreen';
 import ScoreInputScreen from './src/screens/ScoreInputScreen';

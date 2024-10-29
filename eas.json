@@ -18,9 +18,14 @@
       "distribution": "internal"
     },
     "production": {
+      "releaseChannel": "production",
+      "distribution": "store",
       "ios": {
-        "autoIncrement": true,
-        "googleServicesFile": "./GoogleService-Info.plist"
+        "autoIncrement": "buildNumber"
+
+      },
+      "android": {
+        "autoIncrement": "versionCode"
       }
     },
     "development-simulator": {

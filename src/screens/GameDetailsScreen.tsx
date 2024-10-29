@@ -54,15 +54,15 @@ const GameDetailsScreen: React.FC = () => {
 
   //デバッグ用
   useEffect(() => {
-    console.log("GameDetails screen received hanchan:", hanchan);
+    // console.log("GameDetails screen received hanchan:", hanchan);
 }, [hanchan]);
 //デバッグ用
 useEffect(() => {
     if (hanchan.members && hanchan.members.length > 0) {
-        console.log("Members array in hanchan:", hanchan.members);
-        console.log("First member:", hanchan.members[0]);
+        // console.log("Members array in hanchan:", hanchan.members);
+        // console.log("First member:", hanchan.members[0]);
     } else {
-        console.log("Members array is undefined or empty.");
+        // console.log("Members array is undefined or empty.");
     }
 }, [hanchan]);
 
@@ -125,10 +125,10 @@ useEffect(() => {
       const rounds = roundsSnapshot.docs.map((roundDoc) => {
         const round = roundDoc.data();
         const winnerNames = round.winners ? round.winners.map((winner) => winner.winner).join(', ') : '流局';
-        console.log("round:", round);
-        console.log("round.winneraaa:", round.winner);
-        console.log("round.winners:", round.winners);
-        console.log("winnerNames:", winnerNames);
+        // console.log("round:", round);
+        // console.log("round.winneraaa:", round.winner);
+        // console.log("round.winners:", round.winners);
+        // console.log("winnerNames:", winnerNames);
 
         const winnerPoints = round.winners
           ? round.winners.map((winner) => `打点: ${winner.winnerPoints}`).join(', ')
@@ -188,8 +188,8 @@ useEffect(() => {
         }));
         setHanchanList(hanchanList);
 
-        console.log("Game Details:", gameData);
-        console.log("Hanchan List:", hanchanList);
+        // console.log("Game Details:", gameData);
+        // console.log("Hanchan List:", hanchanList);
 
     } catch (error) {
         console.error('Error fetching game details:', error);
@@ -235,9 +235,9 @@ useEffect(() => {
               // その他必要な初期データ
           },
       });
-        console.log("gameId: ", hanchan.gameId);
-        console.log("hanchanId: ", hanchan.id);
-        console.log("New Hanchan created with ID(handleAddRound):", newRoundRef.id, "at", new Date().toLocaleString());
+        // console.log("gameId: ", hanchan.gameId);
+        // console.log("hanchanId: ", hanchan.id);
+        // console.log("New Hanchan created with ID(handleAddRound):", newRoundRef.id, "at", new Date().toLocaleString());
 
     } catch (error) {
         console.error("Error adding new round: ", error);
@@ -252,8 +252,8 @@ useEffect(() => {
       roundId: roundId,       // roundsのドキュメントIDを渡す
       roundData: roundData    // roundデータを渡す
     });
-    console.log("GameDetail roundId: ", roundId);
-    console.log("GameDetail roundData: ", roundData);
+    // console.log("GameDetail roundId: ", roundId);
+    // console.log("GameDetail roundData: ", roundData);
   };
 
   const onDelete = async (roundId) => {

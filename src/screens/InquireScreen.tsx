@@ -11,6 +11,10 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import ContentLoader, { Rect } from 'react-content-loader/native'; // スケルトンUI用のライブラリ
 import { BannerAd, BannerAdSize, TestIds, useForeground } from 'react-native-google-mobile-ads';
 
+
+import AdBanner from '../components/AdBanner';
+
+
 const InquireScreen = () => {
     const navigation = useNavigation();
     const [games, setGames] = useState([]);
@@ -30,20 +34,6 @@ const InquireScreen = () => {
         require('../image/pin_8.png'),
         require('../image/pin_9.png'),
     ];
-    const bannerRef = useRef<BannerAd>(null);
-
-    const adUnitId = __DEV__
-    ? TestIds.ADAPTIVE_BANNER
-    : Platform.OS === 'ios'
-      ? 'ca-app-pub-3940256099942544/2934735716'  // iOSのテストID
-      : 'ca-app-pub-3940256099942544/6300978111'; // AndroidのテストID
-
-    useForeground(() => {
-    if (Platform.OS === 'ios') {
-        bannerRef.current?.load();
-    }
-    });
-
 
     const fetchData = async (loadMore = false) => {
         try {
@@ -266,11 +256,7 @@ const InquireScreen = () => {
                 small icon="plus"
                 onPress={handleAddGame}
             />
-            <BannerAd
-                ref={bannerRef}
-                unitId={adUnitId}
-                size={BannerAdSize.FULL_BANNER}
-            />
+            <AdBanner />
         </View>
     );
 };
