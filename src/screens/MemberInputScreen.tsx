@@ -2,9 +2,10 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet, Button, Alert, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, doc, setDoc, getDocs, query, where, addDoc } from 'firebase/firestore';
-import { db, auth } from '../../firebaseConfig'; // Firebase authentication instance
 import MemberInput from '../components/MemberInput';
 import AdBanner from '../components/AdBanner';
+
+import { db, auth } from '../../firebaseConfig';
 
 
 const MemberInputScreen = ({ route }) => {

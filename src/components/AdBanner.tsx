@@ -2,6 +2,13 @@ import React, { useRef } from 'react';
 import { View, Platform } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds, useForeground } from 'react-native-google-mobile-ads';
 
+
+import mobileAds from 'react-native-google-mobile-ads';
+
+mobileAds().initialize().then(adapterStatuses => {
+  // SDKの初期化が完了
+});
+
 const AdBanner = () => {
     const bannerRef = useRef<BannerAd>(null);
 
