@@ -33,8 +33,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-5588665107660339/7933010772",
-          "iosAppId": "ca-app-pub-5588665107660339/1234567890",
+          "androidAppId": "ca-app-pub-5588665107660339/9831484560",
+          "iosAppId": "ca-app-pub-5588665107660339/7933010772",
           "skAdNetworkItems": [
             "cstr6suwn9.skadnetwork",
             "4fzdc2evr5.skadnetwork"

@@ -19,7 +19,7 @@ const AdBanner = () => {
         : TestIds.ADAPTIVE_BANNER)                  // AndroidのテストID
     : (Platform.OS === 'ios'
         ? 'ca-app-pub-5588665107660339/7933010772'  // iOSの本番用広告ユニットID
-        : 'ca-app-pub-5588665107660339/1234567890'); // Androidの本番用広告ユニットID
+        : 'ca-app-pub-5588665107660339/9831484560'); // Androidの本番用広告ユニットID
 
 
     // iOSではアプリがフォアグラウンドに戻るときに広告を再読み込み
