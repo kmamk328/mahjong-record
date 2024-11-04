@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 12.5.1",
+    "version": ">= 3.0.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -9,9 +9,6 @@
       "distribution": "internal",
       "ios": {
         "simulator": true
-      },
-      "android": {
-        "buildType": "apk"
       }
     },
     "preview": {
@@ -23,9 +20,6 @@
       "ios": {
         "autoIncrement": "buildNumber"
 
-      },
-      "android": {
-        "autoIncrement": "versionCode"
       }
     },
     "development-simulator": {
