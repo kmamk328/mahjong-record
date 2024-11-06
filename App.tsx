@@ -1,6 +1,7 @@
-// require('dotenv').config();
 import 'react-native-gesture-handler';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// require('dotenv').config();
 import React, { useState, useRef } from 'react';
 import { Platform } from 'react-native';
 import { db, auth } from './firebaseConfig';
@@ -111,6 +112,7 @@ export default function App() {
     // });
   }, []); // 初回のみ実行
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <NavigationContainer>
       <Tab.Navigator>
       <Tab.Screen
@@ -146,5 +148,6 @@ export default function App() {
         />
       </Tab.Navigator>
     </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }

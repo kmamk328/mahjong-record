@@ -9,7 +9,6 @@ import { Image } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import ContentLoader, { Rect } from 'react-content-loader/native'; // スケルトンUI用のライブラリ
-import { BannerAd, BannerAdSize, TestIds, useForeground } from 'react-native-google-mobile-ads';
 
 
 import AdBanner from '../components/AdBanner';
