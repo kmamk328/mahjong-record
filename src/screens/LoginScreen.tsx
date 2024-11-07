@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
-import { ResponseType } from 'expo-auth-session';
 import { auth } from '../../firebaseConfig';
 import * as WebBrowser from 'expo-web-browser';
 import { GoogleAuthProvider, signInAnonymously, signInWithEmailAndPassword } from 'firebase/auth';
