@@ -36,7 +36,7 @@ Pods/
 # local env files
 .env*.local
 GoogleSigninConfig.ts
-firebaseConfig.ts
+
 
 # typescript
 *.tsbuildinfo
@@ -45,6 +45,6 @@ firebaseConfig.ts
 memo*.*
 
 
-AdBanner.*
+
 /ios
 /andriod
