@@ -1,16 +1,27 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Platform } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds, useForeground } from 'react-native-google-mobile-ads';
 
 
 import mobileAds from 'react-native-google-mobile-ads';
 
-mobileAds().initialize().then(adapterStatuses => {
-  // SDKの初期化が完了
-});
+
 
 const AdBanner = () => {
     const bannerRef = useRef<BannerAd>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    useEffect(() => {
+        mobileAds()
+            .initialize()
+            .then(() => {
+                setIsInitialized(true);
+            })
+            .catch(error => {
+                console.error("AdMob initialization error:", error);
+            });
+    }, []);
+
 
     // テスト用の広告ユニットIDを設定
     const adUnitId = __DEV__
