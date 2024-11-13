@@ -36,7 +36,7 @@ Pods/
 # local env files
 .env*.local
 GoogleSigninConfig.ts
-
+GoogleService-Info.plist
 
 # typescript
 *.tsbuildinfo
