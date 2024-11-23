@@ -23,7 +23,7 @@ const TermsOfUseScreen: React.FC = () => {
         <ScrollView style={styles.container}>
           <Text style={styles.heading}>利用規約</Text>
           <Text style={styles.paragraph}>
-            この利用規約（以下、「本規約」といいます。）は、[麻雀データベース]（以下、「本アプリ」といいます。）を利用するすべてのお客様（以下、「ユーザー」といいます。）に適用されます。本アプリを利用する前に、本規約をよくお読みください。
+            この利用規約（以下、「本規約」といいます。）は、[麻雀レコード]（以下、「本アプリ」といいます。）を利用するすべてのお客様（以下、「ユーザー」といいます。）に適用されます。本アプリを利用する前に、本規約をよくお読みください。
           </Text>
 
           <Text style={styles.subheading}>第1条（適用）</Text>
