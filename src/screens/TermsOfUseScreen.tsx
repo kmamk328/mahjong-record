@@ -61,9 +61,9 @@ const TermsOfUseScreen: React.FC = () => {
             本規約は、必要に応じて変更されることがあります。変更後の規約は、本アプリ内に掲載された時点で効力を発生します。規約変更後に本アプリを利用した場合、ユーザーは変更後の規約に同意したものとみなされます。
           </Text>
 
-          <Text style={styles.subheading}>[麻雀データベース] 運営者情報</Text>
+          <Text style={styles.subheading}>[麻雀レコード] 運営者情報</Text>
           <Text style={styles.paragraph}>
-            連絡先：mahjongdatabase@gmail.com
+            連絡先：mahjongrecord228@gmail.com
           </Text>
         </ScrollView>
       );
