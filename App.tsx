@@ -30,6 +30,7 @@ import AppInfoScreen from './src/screens/AppInfoScreen';
 import NoticeScreen from './src/screens/NoticeScreen';
 import TermsOfUseScreen from './src/screens/TermsOfUseScreen';
 import MemberManagementScreen from './src/screens/MemberManagementScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import TestScreen from './src/screens/TestScreen';
 
 
@@ -86,6 +87,8 @@ function MenuStackNavigator() {
         <Stack.Screen name="AppInfo" component={AppInfoScreen} />
         <Stack.Screen name="TermsOfUse" component={TermsOfUseScreen} />
         <Stack.Screen name="MemberManagement" component={MemberManagementScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+
       </Stack.Navigator>
   );
 }

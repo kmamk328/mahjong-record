@@ -39,10 +39,10 @@ const MenuScreen = ({ navigation }) => {
           <Text style={styles.menuTitle}>お問い合わせ</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
         </TouchableOpacity> */}
-        <TouchableOpacity style={[styles.menuItem, styles.faq]} onPress={() => navigation.navigate('FAQ')}>
+        {/* <TouchableOpacity style={[styles.menuItem, styles.faq]} onPress={() => navigation.navigate('FAQ')}>
           <Text style={styles.menuTitle}>よくある質問</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity style={[styles.menuItem, styles.settings]} onPress={() => navigation.navigate('Settings')}>
           <Text style={styles.menuTitle}>設定</Text>
@@ -59,10 +59,10 @@ const MenuScreen = ({ navigation }) => {
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
         </TouchableOpacity>
 
-        {/* <TouchableOpacity style={[styles.menuItem, styles.privacyPolicy]} onPress={() => navigation.navigate('PrivacyPolicy')}>
+        <TouchableOpacity style={[styles.menuItem, styles.privacyPolicy]} onPress={() => navigation.navigate('PrivacyPolicy')}>
           <Text style={styles.menuTitle}>プライバシーポリシー</Text>
           <Image source={require('../image/sou_1.png')} style={styles.icon} />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
 
 
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E90FF',
   },
   privacyPolicy: {
-    backgroundColor: '#87CEFA',
+    backgroundColor: '#32CD32',
   },
   menuTitle: {
     fontSize: 16,
